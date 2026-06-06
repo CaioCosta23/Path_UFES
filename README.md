@@ -7,7 +7,7 @@ Universidade Federal do Espírito Santo (UFES).
 
 - Pré-Requisitos:
 
-    1. Docker
-    2. Node JS (Versão 18 ou superior)
-    3. npm
-    4. yarn (opcional, caso já possua o npm)
+  - Docker
+  - Node JS (Versão 18 ou superior)
+  - npm
+  - yarn (opcional, caso já possua o npm)
