@@ -3,7 +3,7 @@
 O _Path UFES_ é um sistema de gerenciamento e planejamento acadêmco, voltado inicialmente para alunos do curso de Ciência da Computação da
 Universidade Federal do Espírito Santo (UFES).
 
-## Instruções de Construção de Projeto :hammer_and_wrench::nut_and_bolt:
+## Construção do Projeto :hammer_and_wrench::nut_and_bolt:
 
 - Pré-Requisitos:
 
