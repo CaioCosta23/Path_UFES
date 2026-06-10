@@ -5,7 +5,7 @@ voltado inicialmente, para alunos do curso de Ciência da Computação da Univer
 
 Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco_MiguelMurad.pdf) nossa proposta de projeto completa.
 
-## Construção do Projeto :hammer_and_wrench::nut_and_bolt:
+## Ferramentas de Construção :hammer_and_wrench::nut_and_bolt:
 
 - Pré-Requisitos:
 
