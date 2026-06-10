@@ -18,11 +18,10 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ---
 
-## Construção do Projeto :hammer_and_wrench::nut_and_bolt:
+## Tecnologias :computer:
 
-- Pré-Requisitos:
+### :hammer_and_wrench::nut_and_bolt: Ferramentas de Construção
 
-  - Docker
-  - Node JS (Versão 18 ou superior)
-  - npm
-  - yarn (opcional, caso já possua o npm)
+<!-- Ainda em desenvolvimento-->
+
+---
