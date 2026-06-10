@@ -8,6 +8,16 @@ da maneira mais rápida, tranquila e eficiente.
 
 Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco_MiguelMurad.pdf) nossa proposta de projeto completa.
 
+---
+
+## Funcionalidades :gear:
+
+- Sugerir quais matérias cursar em semestres posteriores
+- Organizar grade de horário do estudante
+- Criar sugestão de trilha para quais matérias cursar nos próximos semestres
+
+---
+
 ## Construção do Projeto :hammer_and_wrench::nut_and_bolt:
 
 - Pré-Requisitos:
