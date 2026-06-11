@@ -25,3 +25,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 <!-- Ainda em desenvolvimento-->
 
 ---
+
+
+#### :scroll: Pré-Requisitos
+<!--Ainda em desenvolvimento-->
