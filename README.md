@@ -28,3 +28,12 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 #### :scroll: Pré-Requisitos
 <!--Ainda em desenvolvimento-->
+
+## Contrubuição :handshake:
+
+- Para ser um colaborador do nosso projeto, siga os seguintes passos:
+
+    1. Faça um _fork_
+    2. Crie uma _branch_
+    3. Faça _commit_ das alterações
+    4. Abra um _pull request_
