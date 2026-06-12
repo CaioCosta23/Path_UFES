@@ -29,7 +29,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 #### :scroll: Pré-Requisitos
 <!--Ainda em desenvolvimento-->
 
-## Contrubuição :handshake::skin-tone-5:
+## Contrubuição :handshake:
 
 - Para ser um colaborador do nosso projeto, siga os seguintes passos:
 
