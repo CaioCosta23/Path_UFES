@@ -20,24 +20,24 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ## Tecnologias :computer:
 
-- **Prototipação:pencil2:**
+- **Prototipação :pencil2:**
 
     ![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
 
-- **Documentação:open_file_folder:**
+- **Documentação :open_file_folder:**
 
     ![UML](https://img.shields.io/badge/Uml-FABD14?style=for-the-badge&logo=uml&logoColor=white)
     ![Sphinx](https://img.shields.io/badge/Sphinx-black?style=for-the-badge&logo=sphinx&logoColor=white)
     ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 
-- **Infraestrutura:hammer_and_wrench:**
+- **Infraestrutura :hammer_and_wrench:**
 
     ![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
     ![npm](https://img.shields.io/badge/Npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)
     ![Yarn](https://img.shields.io/badge/Yarn-2C8EBB?style=for-the-badge&logo=yarn&logoColor=white)
     ![Node.Js](https://img.shields.io/badge/NodeJS-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)
 
-- **Frameworks:wrench:**
+- **Frameworks :wrench:**
 
     ![Vite](https://img.shields.io/badge/Vite-9135FF?style=for-the-badge&logo=vite&logoColor=white)
     ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
@@ -45,7 +45,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
     ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-3776AB?style=for-the-badge&logo=thymeleaf&logoColor=white)
     ![Cytoscape.js](https://img.shields.io/badge/CytoscapeJS-F7DF1E?style=for-the-badge&logo=cytoscapedotjs&logoColor=black)
 
-- **Front-End:iphone:**
+- **Front-End :iphone:**
 
     ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
     ![CSS](https://img.shields.io/badge/CSS-663399?style=for-the-badge&logo=css&logoColor=white)
