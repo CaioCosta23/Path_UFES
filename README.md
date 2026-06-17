@@ -20,13 +20,56 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ## Tecnologias :computer:
 
-### :hammer_and_wrench::nut_and_bolt: Ferramentas de Construção
+- **Prototipação:pencil2:**
 
-<!-- Ainda em desenvolvimento-->
+    ![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
 
----
+- **Documentação:file_folder:**
 
-#### :scroll: Pré-Requisitos
+    ![UML](https://img.shields.io/badge/Uml-FABD14?style=for-the-badge&logo=uml&logoColor=white)
+    ![Sphinx](https://img.shields.io/badge/Sphinx-black?style=for-the-badge&logo=sphinx&logoColor=white)
+    ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
+
+- **Infraestrutura:hammer_and_wrench:**
+
+    ![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
+    ![npm](https://img.shields.io/badge/Npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)
+    ![Yarn](https://img.shields.io/badge/Yarn-2C8EBB?style=for-the-badge&logo=yarn&logoColor=white)
+    ![Node.Js](https://img.shields.io/badge/NodeJS-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)
+
+- **Frameworks:wrench:**
+
+    ![Vite](https://img.shields.io/badge/Vite-9135FF?style=for-the-badge&logo=vite&logoColor=white)
+    ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+    ![Bootsrap](https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+    ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-3776AB?style=for-the-badge&logo=thymeleaf&logoColor=white)
+    ![Cytoscape.js](https://img.shields.io/badge/CytoscapeJS-F7DF1E?style=for-the-badge&logo=cytoscapedotjs&logoColor=black)
+
+- **Front-End:iphone:**
+
+    ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+    ![CSS](https://img.shields.io/badge/CSS-663399?style=for-the-badge&logo=css&logoColor=white)
+    ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+    ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+
+- **Back-End :nut_and_bolt:**
+
+    ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=yellow)
+    ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+    ![JSON](https://img.shields.io/badge/JSON-black?style=for-the-badge&logo=json&logoColor=white)
+    ![GNU Bash](https://img.shields.io/badge/GnuBash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)
+
+- **Testes :bookmark_tabs:**
+
+    ![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
+    ![Vitest](https://img.shields.io/badge/Vitest-00FF74?style=for-the-badge&logo=vitest&logoColor=yellow)
+
+- **Versionamento :arrow_right:**
+
+    ![Git](https://img.shields.io/badge/Git-F03C2E?style=for-the-badge&logo=git&logoColor=white)
+    ![Github](https://img.shields.io/badge/Github-white?style=for-the-badge&logo=github&logoColor=181717)
+
+### :scroll: Pré-Requisitos
 <!--Ainda em desenvolvimento-->
 
 ## Contrubuição :handshake:
