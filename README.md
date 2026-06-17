@@ -76,7 +76,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ### Coloque aqui as especificações de cada ferramenta
 
-- [Tecnologias](#tecnologias-)
+- [Tecnologias](#tecnologias-computer)
 
 - Prototipação, Documentação e infraestrutura:
 - Frameworks e Front-end: Daniel
