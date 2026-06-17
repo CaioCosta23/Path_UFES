@@ -78,7 +78,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 - [Tecnologias](#tecnologias-computer)
 
-- Prototipação, Documentação e infraestrutura:
+- Prototipação, Documentação e infraestrutura: Caio
 - Frameworks e Front-end: Daniel
 - Back-end, Testes e versionamento: Miguel
 
