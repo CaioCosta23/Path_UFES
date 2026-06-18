@@ -69,6 +69,29 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
     ![Git](https://img.shields.io/badge/Git-F03C2E?style=for-the-badge&logo=git&logoColor=white)
     ![Github](https://img.shields.io/badge/Github-white?style=for-the-badge&logo=github&logoColor=181717)
 
+---
+
+### :page_facing_up:Descrição de Ferramentas
+
+- Prototipação:
+  - Figma: ferramenta de design de interfaces, prototipação e colaboração online, utilizada para a prototipação (de baixo nível) do projeto;
+  
+- Documentação:
+  - UML (_Unfield Modeling Language_): linguagem de visual padronizada, utilizada para documentação e modelagem de projetos de sistemas de software. Neste projeto, a ferramenta a ser utilizada para a modelagem dos diagramas (de classes) desse sistema será o **Astah**, devido a sua versatilidade e fácilidade de uso;
+
+  - Sphinx: Ferramenta de gerção automática de documentação de código, sendo muito utilizado para frameworks, APIs, bibliotecas python (junto as DOCSTRINGS - tipo de documentação de código a ser utilizada), entre outros.
+  
+  - Swagger: Conjunto de ferramentas e especificações utilizadas para documentar, testar e visualizar as APIs (REST - inclusive os chamados "_endpoits_").
+
+- Infraestrutura:
+  - Docker: plataforma que permitirá empacotar, distribuir e executar a aplicação em ambientes isolados (chamados _containers_). Isso permite que a aplicação execute as mesmas bibliotecas, depêndencias e configurações (conceito do que contém um _container_), independente do sistema operacional, ou servidor em que esteja rodando.
+  
+  - Node.Js: ambiente de execução ("_runtime_") que permite executar códigos em JavaScript fora do navegador (utilizado para desenvolvimento _Back-end_).
+  
+  - npm: Gerenciador de pacotes (conjunto de códigos reutilizáveis para resolver problemas específicos), padrão do ambiente de execução do Node.Js, utilizado para instalar, atualizar, remover e gerenciar pacotes em JavaScript usados no _Back-end_.
+
+  - yarn: Gerenciador de pacotes Javascript que tem a mesma função do npm.
+
 ### :scroll: Pré-Requisitos
 <!--Ainda em desenvolvimento-->
 
@@ -78,7 +101,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 - [Tecnologias](#tecnologias-computer)
 
-- Prototipação, Documentação e infraestrutura: Caio
+- ~~Prototipação, Documentação e infraestrutura: Caio~~
 - Frameworks e Front-end: Daniel
 - Back-end, Testes e versionamento: Miguel
 
