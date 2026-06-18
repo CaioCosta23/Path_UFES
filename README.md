@@ -109,7 +109,9 @@ Para mais informações sobre cada ferramenta, visite as [referências](#referê
 ## Referências :link:
 
 - Sites: [Figma](https://figma.com), [Astah](https://astah.net)
-- Documentações oficiais: [UML](https://www.omg.org/uml/), [Sphinx](https://www.sphinx-doc.org/pt-br/master/), [Swagger](https://swagger.io/docs/), [Docker](https://docs.docker.com/), [NodeJs](https://nodejs.org/docs/latest/api/), [npm](https://docs.npmjs.com/), [yarn](https://classic.yarnpkg.com/lang/en/docs/)
+- Documentações oficiais: [UML](https://www.omg.org/uml/), [Sphinx](https://www.sphinx-doc.org/pt-br/master/), [Swagger](https://swagger.io/docs/), [Docker](https://docs.docker.com/), [NodeJs](https://nodejs.org/docs/latest/api/), [npm](https://docs.npmjs.com/), [yarn](https://classic.yarnpkg.com/lang/en/docs/), [Vite](https://pt.vite.dev/guide/), [FastAPI](https://fastapi.tiangolo.com/), [Bootstrap](https://getbootstrap.com/docs/4.1/getting-started/introduction/), [Thymeleaf](https://www.thymeleaf.org/documentation.html), [Cytoscape.Js](https://cytoscape.org/documentation_developers.html), [HTML5](https://html.spec.whatwg.org/), [CSS](https://developer.mozilla.org/pt-BR/docs/Web/CSS), [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript), [React](https://pt-br.react.dev/), [Python](https://docs.python.org/pt-br/3/), [PostegreSQL](https://www.postgresql.org/docs/), [JSON](https://www.json.org/json-pt.html), [GNUBash](https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html), [Pytest](https://docs.pytest.org/en/stable/), [Vitest](https://vitest.dev/guide/), [Git](https://git-scm.com/docs/git/pt_BR), [GitHub](https://docs.github.com/pt)
+
+---
 
 ## Contrubuição :handshake:
 
