@@ -71,7 +71,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ---
 
-### :page_facing_up:Descrição e Uso de Ferramentas
+### :page_facing_up: Descrição e Uso de Ferramentas
 
 - Prototipação:
   - Figma: ferramenta de design de interfaces, prototipação e colaboração online, utilizada para a prototipação (de baixo nível) do projeto;
@@ -91,9 +91,8 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
   - npm: Gerenciador de pacotes (conjunto de códigos reutilizáveis para resolver problemas específicos), padrão do ambiente de execução do Node.Js, utilizado para instalar, atualizar, remover e gerenciar pacotes em JavaScript usados no _Back-end_.
 
   - yarn: Gerenciador de pacotes Javascript que tem a mesma função do npm.
-
-### :scroll: Pré-Requisitos
-<!--Ainda em desenvolvimento-->
+  
+Para mais informações sobre cada ferramenta, visite as [referências](#referências-link) do repositório.
 
 ---
 
@@ -106,6 +105,11 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 - Back-end, Testes e versionamento: Miguel
 
 ---
+
+## Referências :link:
+
+- Sites: [Figma](https://figma.com), [Astah](https://astah.net)
+- Documentações oficiais: [UML](https://www.omg.org/uml/), [Sphinx](https://www.sphinx-doc.org/pt-br/master/), [Swagger](https://swagger.io/docs/), [Docker](https://docs.docker.com/), [NodeJs](https://nodejs.org/docs/latest/api/), [npm](https://docs.npmjs.com/), [yarn](https://classic.yarnpkg.com/lang/en/docs/)
 
 ## Contrubuição :handshake:
 
