@@ -5,6 +5,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    environment:
+      - DATABASE_URL=postgreesql://postgres:senha123@db:5432/pathufes
+    depends_on:
+      - db  
     restart: always
 
   frontend:
@@ -17,3 +21,18 @@ services:
     depends_on:
       - backend
     restart: always
+
+    db:
+      image: postgres:16
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=senha123
+        - POSTGRES_DB=pathufes
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      restart: always
+
+  voulumes:
+    postgres_data:
