@@ -94,6 +94,26 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ### Coloque aqui as especificações de cada ferramenta
 
+- Back-end:
+  - Python: linguagem de programação de alto nível, utilizada no desenvolvimento da lógica de _back-end_ da aplicação, incluindo os algoritimos de análise de grafos e pré-requisitos da grade curricular;
+
+  - PostgreSQL: sistema de gerenciamento de banco de dados relacional (_SGBD_), utilizado para o armazenamento e a manipulação dos dados da aplicação (como informações de alunos, disciplinas e grades curriculares);
+
+  - JSON (_JavaScript Object Notation_): formato leve de troca de dados, utilizado para a comunicação entre o _Front-end_ e o _Back-end_ da aplicação (através das requisições e respostas da API);
+
+  - GNU Bash: interpretador de linha de comando (_shell_), utilizado para a automação de tarefas e execução de _scripts_ no ambiente de desenvolvimento e produção da aplicação.
+
+- Testes:
+  - Pytest: _framework_ de testes para a linguagem Python, utilizado para a escrita e execução dos testes automatizados do _Back-end_ da aplicação;
+
+  - Vitest: _framework_ de testes voltado para aplicações que utilizam Vite, utilizado para a escrita e execução dos testes automatizados do _Front-end_ da aplicação.
+
+- Versionamento:
+  - Git: sistema de controle de versão distribuído, utilizado para o gerenciamento do histórico de alterações do código-fonte da aplicação;
+
+  - GitHub: plataforma de hospedagem de repositórios baseada em Git, utilizada para o armazenamento remoto do código, colaboração entre a equipe e gerenciamento de _pull requests_ e _issues_ do projeto.
+
+
 - [Tecnologias](#tecnologias-computer)
 
 - ~~Prototipação, Documentação e infraestrutura: Caio~~
