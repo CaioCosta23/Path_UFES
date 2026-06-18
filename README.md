@@ -91,10 +91,6 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
   - npm: Gerenciador de pacotes (conjunto de códigos reutilizáveis para resolver problemas específicos), padrão do ambiente de execução do Node.Js, utilizado para instalar, atualizar, remover e gerenciar pacotes em JavaScript usados no _Back-end_.
 
   - yarn: Gerenciador de pacotes Javascript que tem a mesma função do npm.
-  
-Para mais informações sobre cada ferramenta, visite as [referências](#referências-link) do repositório.
-
----
 
 ### Coloque aqui as especificações de cada ferramenta
 
@@ -103,8 +99,25 @@ Para mais informações sobre cada ferramenta, visite as [referências](#referê
 - ~~Prototipação, Documentação e infraestrutura: Caio~~
 - Frameworks e Front-end: Daniel
 - Back-end, Testes e versionamento: Miguel
+  
+Para mais informações sobre cada ferramenta, visite as [referências](#referências-link) do repositório.
 
 ---
+
+## Instalação e Execução da Aplicação :arrow_forward:
+
+Instalando a aplicação (repositório):
+
+```GnuBash
+git clone https://github.com/CaioCosta23/Path_UFES.git
+```
+
+Para executar a aplicação basta rodar o(s) seguinte(s) comando(s):
+
+```GnuBash
+cd Path_UFES
+docker compose up
+```
 
 ## Referências :link:
 
