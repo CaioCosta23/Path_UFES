@@ -71,7 +71,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 ---
 
-### :page_facing_up:Descrição de Ferramentas
+### :page_facing_up:Descrição e Uso de Ferramentas
 
 - Prototipação:
   - Figma: ferramenta de design de interfaces, prototipação e colaboração online, utilizada para a prototipação (de baixo nível) do projeto;
