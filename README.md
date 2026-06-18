@@ -124,6 +124,30 @@ Para mais informações sobre cada ferramenta, visite as [referências](#referê
 
 ---
 
+## Gerando a Documentação :books:
+
+- **Documentação do código (Sphinx):**
+
+    A documentação do código-fonte (gerada a partir das _docstrings_ do Python) é construída com o Sphinx. Para gerá-la localmente, rode:
+
+    ```GnuBash
+    cd docs
+    sphinx-build -b html source build
+    ```
+
+    Após a geração, abra o arquivo `docs/build/index.html` no navegador para visualizar a documentação.
+
+- **Documentação da API (Swagger):**
+
+    Como o _Back-end_ é construído com FastAPI, a documentação interativa da API é gerada automaticamente e fica disponível assim que a aplicação está rodando (via `docker compose up`), nos endereços:
+
+    - Swagger UI: `http://localhost:8000/docs`
+    - Redoc: `http://localhost:8000/redoc`
+
+> :warning: Ajuste os caminhos (`docs/source`, `docs/build`) e a porta (`8000`) conforme a configuração final do projeto.
+
+---
+
 ## Instalação e Execução da Aplicação :arrow_forward:
 
 Instalando a aplicação (repositório):
