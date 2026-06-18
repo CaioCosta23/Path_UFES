@@ -30,7 +30,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
     ![Sphinx](https://img.shields.io/badge/Sphinx-black?style=for-the-badge&logo=sphinx&logoColor=white)
     ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 
-- **Infraestrutura :hammer_and_wrench:**
+- **Infraestrutura :building_construction:**
 
     ![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
     ![npm](https://img.shields.io/badge/Npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)
@@ -100,7 +100,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 - Frameworks e Front-end: Daniel
 - Back-end, Testes e versionamento: Miguel
   
-Para mais informações sobre cada ferramenta, visite as [referências](#referências-link) do repositório.
+Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [referências](#referências-link) do repositório.
 
 ---
 
