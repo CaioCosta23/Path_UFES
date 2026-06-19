@@ -118,9 +118,26 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
 - ~~Prototipação, Documentação e infraestrutura: Caio~~
 - Frameworks e Front-end: Daniel
-- Back-end, Testes e versionamento: Miguel
+- ~~Back-end, Testes e versionamento: Miguel~~
   
 Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [referências](#referências-link) do repositório.
+
+---
+
+## Instalação e Execução da Aplicação :arrow_forward:
+
+Instalando a aplicação (repositório):
+
+```GnuBash
+git clone https://github.com/CaioCosta23/Path_UFES.git
+```
+
+Para executar a aplicação basta rodar o(s) seguinte(s) comando(s):
+
+```GnuBash
+cd Path_UFES
+docker compose up
+```
 
 ---
 
@@ -163,23 +180,6 @@ Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [
     - Redoc: `http://localhost:8000/redoc`
 
 > :warning: Ajuste os caminhos (`docs/source`, `docs/build`) e a porta (`8000`) conforme a configuração final do projeto.
-
----
-
-## Instalação e Execução da Aplicação :arrow_forward:
-
-Instalando a aplicação (repositório):
-
-```GnuBash
-git clone https://github.com/CaioCosta23/Path_UFES.git
-```
-
-Para executar a aplicação basta rodar o(s) seguinte(s) comando(s):
-
-```GnuBash
-cd Path_UFES
-docker compose up
-```
 
 ## Referências :link:
 
