@@ -92,6 +92,26 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
   - yarn: Gerenciador de pacotes Javascript que tem a mesma função do npm.
 
+- Frameworks:
+  - Vite: ferramenta de _build_ e servidor de desenvolvimento para aplicações web modernas, utilizado para empacotar e servir o _Front-end_ da aplicação com _Hot Module Replacement_ (HMR) rápido;
+
+  - FastAPI: _framework_ web em Python para a construção de APIs _REST_ de alto desempenho, utilizado no desenvolvimento do _Back-end_ da aplicação. Possui validação automática de dados (via Pydantic) e geração automática de documentação interativa;
+
+  - Bootstrap: _framework_ de _CSS_ que fornece um conjunto de componentes prontos (botões, formulários, _modais_, sistema de _grid_) e classes utilitárias responsivas, utilizado para estilizar e padronizar a interface do _Front-end_;
+
+  - Thymeleaf: _template engine_ utilizado para a renderização de páginas _HTML_ no lado do servidor, integrando dados do _Back-end_ diretamente ao conteúdo apresentado ao usuário;
+
+  - Cytoscape.js: biblioteca _JavaScript_ especializada na visualização e análise de grafos no navegador, utilizada para renderizar de forma interativa e organizada o grafo de disciplinas e pré-requisitos da grade curricular.
+
+- Front-end:
+  - HTML5: linguagem de marcação padrão para a estruturação de páginas web, responsável pela definição do conteúdo semântico (cabeçalhos, seções, formulários, listas, entre outros) exibido no navegador;
+
+  - CSS (_Cascading Style Sheets_): linguagem de estilização utilizada para definir a aparência visual das páginas web (cores, fontes, _layout_, espaçamento, animações e responsividade);
+
+  - JavaScript: linguagem de programação executada no navegador, utilizada para adicionar interatividade e dinamismo ao _Front-end_ da aplicação (manipulação de elementos, requisições assíncronas, tratamento de eventos);
+
+  - React: biblioteca _JavaScript_ para a construção de interfaces de usuário baseadas em componentes reutilizáveis e reativos, utilizada para implementar as telas interativas do _Front-end_.
+
 ### Coloque aqui as especificações de cada ferramenta
 
 - Back-end:
