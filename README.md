@@ -126,9 +126,17 @@ Para mais informações sobre cada ferramenta, visite as [referências](#referê
 
 ## Gerando a Documentação :books:
 
-- **Documentação do código (Sphinx):**
+- **Documentação do código - Back-end (Sphinx):**
 
-    A documentação do código-fonte (gerada a partir das _docstrings_ do Python) é construída com o Sphinx. Para gerá-la localmente, rode:
+    Como o desenvolvimento do _Back-end_ é feito dentro de um ambiente virtual Python, é necessário criá-lo (caso ainda não exista) e ativá-lo, dentro da pasta `backend`, antes de gerar a documentação:
+
+    ```GnuBash
+    cd backend
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+    Com o ambiente virtual ativo, gere a documentação com o Sphinx:
 
     ```GnuBash
     cd docs
@@ -136,6 +144,16 @@ Para mais informações sobre cada ferramenta, visite as [referências](#referê
     ```
 
     Após a geração, abra o arquivo `docs/build/index.html` no navegador para visualizar a documentação.
+
+    > :bulb: Para sair do ambiente virtual após terminar, basta rodar `deactivate` no terminal.
+
+- **Documentação do código - Front-end:**
+
+    A documentação do _Front-end_ é gerada através do seguinte comando, executado na pasta do _Front-end_:
+
+    ```GnuBash
+    npm run docs
+    ```
 
 - **Documentação da API (Swagger):**
 
