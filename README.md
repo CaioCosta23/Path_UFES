@@ -112,8 +112,6 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
   - React: biblioteca _JavaScript_ para a construção de interfaces de usuário baseadas em componentes reutilizáveis e reativos, utilizada para implementar as telas interativas do _Front-end_.
 
-### Coloque aqui as especificações de cada ferramenta
-
 - Back-end:
   - Python: linguagem de programação de alto nível, utilizada no desenvolvimento da lógica de _back-end_ da aplicação, incluindo os algoritimos de análise de grafos e pré-requisitos da grade curricular;
 
@@ -132,12 +130,6 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
   - Git: sistema de controle de versão distribuído, utilizado para o gerenciamento do histórico de alterações do código-fonte da aplicação;
 
   - GitHub: plataforma de hospedagem de repositórios baseada em Git, utilizada para o armazenamento remoto do código, colaboração entre a equipe e gerenciamento de _pull requests_ e _issues_ do projeto.
-
-- [Tecnologias](#tecnologias-computer)
-
-- ~~Prototipação, Documentação e infraestrutura: Caio~~
-- Frameworks e Front-end: Daniel
-- ~~Back-end, Testes e versionamento: Miguel~~
   
 Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [referências](#referências-link) do repositório.
 
@@ -145,7 +137,7 @@ Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [
 
 ## Arquitetura e Diagramação de Projeto :building_construction:
 
-Uma vez que o projeto será uma produção baseada no paradigma orientado à objetos, foi realizada a cosntrução de alguns diagramas foram necessários, sendo esses encontrados de maineira mais clara na pasta de [documentação](docs/assets/diagrams), onde estará disponível o diagrama de [classes](docs/assets//diagrams/).
+Uma vez que o projeto será uma produção baseada no paradigma orientado à objetos, foi realizada a cosntrução de alguns diagramas foram necessários, sendo esses encontrados de maineira mais clara na pasta de [documentação](docs/assets/diagrams), onde estará disponível o diagrama de [classes](docs/assets//diagrams/class/class_diagram-v1.pdf).
 
 ## Instalação e Execução da Aplicação :arrow_forward:
 
