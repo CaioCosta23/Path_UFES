@@ -124,6 +124,48 @@ Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [
 
 ---
 
+## Gerando a Documentação :books:
+
+- **Documentação do código - Back-end (Sphinx):**
+
+    Como o desenvolvimento do _Back-end_ é feito dentro de um ambiente virtual Python, é necessário criá-lo (caso ainda não exista) e ativá-lo, dentro da pasta `backend`, antes de gerar a documentação:
+
+    ```GnuBash
+    cd backend
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+    Com o ambiente virtual ativo, gere a documentação com o Sphinx:
+
+    ```GnuBash
+    cd docs
+    sphinx-build -b html source build
+    ```
+
+    Após a geração, abra o arquivo `docs/build/index.html` no navegador para visualizar a documentação.
+
+    > :bulb: Para sair do ambiente virtual após terminar, basta rodar `deactivate` no terminal.
+
+- **Documentação do código - Front-end:**
+
+    A documentação do _Front-end_ é gerada através do seguinte comando, executado na pasta do _Front-end_:
+
+    ```GnuBash
+    npm run docs
+    ```
+
+- **Documentação da API (Swagger):**
+
+    Como o _Back-end_ é construído com FastAPI, a documentação interativa da API é gerada automaticamente e fica disponível assim que a aplicação está rodando (via `docker compose up`), nos endereços:
+
+    - Swagger UI: `http://localhost:8000/docs`
+    - Redoc: `http://localhost:8000/redoc`
+
+> :warning: Ajuste os caminhos (`docs/source`, `docs/build`) e a porta (`8000`) conforme a configuração final do projeto.
+
+---
+
 ## Instalação e Execução da Aplicação :arrow_forward:
 
 Instalando a aplicação (repositório):
