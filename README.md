@@ -30,7 +30,7 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
     ![Sphinx](https://img.shields.io/badge/Sphinx-black?style=for-the-badge&logo=sphinx&logoColor=white)
     ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 
-- **Infraestrutura :building_construction:**
+- **Infraestrutura :bricks:**
 
     ![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
     ![npm](https://img.shields.io/badge/Npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)
@@ -122,6 +122,10 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [referências](#referências-link) do repositório.
 
 ---
+
+## Arquitetura e Diagramação de Projeto :building_construction:
+
+Uma vez que o projeto será uma produção baseada no paradigma orientado à objetos, foi realizada a cosntrução de alguns diagramas foram necessários, sendo esses encontrados de maineira mais clara na pasta de [documentação](docs/assets/diagrams), onde estará disponível o diagrama de [classes](docs/assets//diagrams/).
 
 ## Instalação e Execução da Aplicação :arrow_forward:
 
