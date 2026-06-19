@@ -113,7 +113,6 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
 
   - GitHub: plataforma de hospedagem de repositórios baseada em Git, utilizada para o armazenamento remoto do código, colaboração entre a equipe e gerenciamento de _pull requests_ e _issues_ do projeto.
 
-
 - [Tecnologias](#tecnologias-computer)
 
 - ~~Prototipação, Documentação e infraestrutura: Caio~~
@@ -176,10 +175,12 @@ docker compose up
 
     Como o _Back-end_ é construído com FastAPI, a documentação interativa da API é gerada automaticamente e fica disponível assim que a aplicação está rodando (via `docker compose up`), nos endereços:
 
-    - Swagger UI: `http://localhost:8000/docs`
-    - Redoc: `http://localhost:8000/redoc`
+  - Swagger UI: `http://localhost:8000/docs`
+  - Redoc: `http://localhost:8000/redoc`
 
 > :warning: Ajuste os caminhos (`docs/source`, `docs/build`) e a porta (`8000`) conforme a configuração final do projeto.
+
+---
 
 ## Referências :link:
 
