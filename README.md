@@ -42,7 +42,6 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
     ![Vite](https://img.shields.io/badge/Vite-9135FF?style=for-the-badge&logo=vite&logoColor=white)
     ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
     ![Bootsrap](https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
-    ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-3776AB?style=for-the-badge&logo=thymeleaf&logoColor=white)
     ![Cytoscape.js](https://img.shields.io/badge/CytoscapeJS-F7DF1E?style=for-the-badge&logo=cytoscapedotjs&logoColor=black)
 
 - **Front-End :iphone:**
@@ -98,8 +97,6 @@ Para mais detalhes, acesse [aqui](docs/proposta_pathufes-CaioCosta_DanielSbrocco
   - FastAPI: _framework_ web em Python para a construção de APIs _REST_ de alto desempenho, utilizado no desenvolvimento do _Back-end_ da aplicação. Possui validação automática de dados (via Pydantic) e geração automática de documentação interativa;
 
   - Bootstrap: _framework_ de _CSS_ que fornece um conjunto de componentes prontos (botões, formulários, _modais_, sistema de _grid_) e classes utilitárias responsivas, utilizado para estilizar e padronizar a interface do _Front-end_;
-
-  - Thymeleaf: _template engine_ utilizado para a renderização de páginas _HTML_ no lado do servidor, integrando dados do _Back-end_ diretamente ao conteúdo apresentado ao usuário;
 
   - Cytoscape.js: biblioteca _JavaScript_ especializada na visualização e análise de grafos no navegador, utilizada para renderizar de forma interativa e organizada o grafo de disciplinas e pré-requisitos da grade curricular.
 
