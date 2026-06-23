@@ -139,6 +139,8 @@ Para mais informações sobre (uso e como instalar) cada ferramenta, visite as [
 
 Uma vez que o projeto será uma produção baseada no paradigma orientado à objetos, foi realizada a cosntrução de alguns diagramas foram necessários, sendo esses encontrados de maineira mais clara na pasta de [documentação](docs/assets/diagrams), onde estará disponível o diagrama de [classes](docs/assets//diagrams/class/class_diagram-v1.pdf).
 
+---
+
 ## Instalação e Execução da Aplicação :arrow_forward:
 
 Instalando a aplicação (repositório):
