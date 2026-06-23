@@ -12,6 +12,7 @@
     "docs": "jsdoc -c jsdoc.json"
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
