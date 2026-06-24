@@ -159,15 +159,18 @@ docker compose up
 
 - **Documentação do código - Back-end (Sphinx):**
 
-    Como o desenvolvimento do _Back-end_ é feito dentro de um ambiente virtual Python, é necessário criá-lo (caso ainda não exista) e ativá-lo, dentro da pasta `backend`, antes de gerar a documentação:
+    Como o desenvolvimento do _Back-end_ é feito dentro de um ambiente virtual Python, é necessário criá-lo (caso ainda não exista) e ativá-lo, dentro da pasta `backend` e, em seguida, criar algumas configurações de documentação (para o banco de dados e a aplicação de documentação automática) antes de gerar a documentação:
 
     ```GnuBash
     cd backend
     python3 -m venv venv
     source venv/bin/activate
+    pip install sphinx_rtd_theme
+    pip install sqlalchemy psycopg2-binary alembic
+    pip freeze > requirements.txt
     ```
 
-    Com o ambiente virtual ativo, gere a documentação com o Sphinx:
+    Com o ambiente virtual ativo e suporte de documentação commpleta e do banco de dados criado, volte para a pasta raíz do projeto, gere a documentação com o Sphinx:
 
     ```GnuBash
     cd docs
@@ -183,6 +186,7 @@ docker compose up
     A documentação do _Front-end_ é gerada através do seguinte comando, executado na pasta do _Front-end_:
 
     ```GnuBash
+    cd frontend
     npm run docs
     ```
 
