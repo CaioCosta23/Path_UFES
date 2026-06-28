@@ -226,6 +226,145 @@ O banco segue o diagrama de classes em `docs/assets/diagrams/class/class_diagram
 
 ---
 
+## Guia de arquivos do backend
+
+Esta seção explica o propósito de cada arquivo do backend, como eles se relacionam e por que existem. Leia isso antes de mexer no código.
+
+---
+
+### `app/database.py` — Conexão com o banco
+
+Cria o **engine** (o objeto que sabe como se conectar ao PostgreSQL), o **SessionLocal** (fábrica de sessões — cada requisição HTTP abre e fecha uma sessão) e o **Base** (classe-pai de todos os models).
+
+A função `get_db()` é uma dependência do FastAPI: ela abre uma sessão no início de cada requisição e fecha no final, mesmo que ocorra um erro. Todos os routers recebem essa sessão via `Depends(get_db)`.
+
+```
+database.py  →  fornece Base e get_db()
+    ↓                  ↓
+models.py         routers/*.py
+(herda Base)    (usa get_db via Depends)
+```
+
+---
+
+### `app/models.py` — Tabelas do banco (SQLAlchemy ORM)
+
+Define as tabelas do banco como classes Python. O SQLAlchemy traduz essas classes para SQL automaticamente. Cada atributo da classe vira uma coluna.
+
+Arquivos de models têm três tipos de objetos:
+
+- **Enums** (`TipoDisciplina`, `Departamento`, `PeriodoOferta`): valores fixos que uma coluna pode ter
+- **Tabelas associativas** (`prerequisitos`, `historico_disciplinas`, `curriculo_disciplinas`): implementam relacionamentos muitos-para-muitos com colunas extras
+- **Classes mapeadas** (`Disciplina`, `Aluno`, `Historico`, `Curriculo`): as entidades principais
+
+A tabela `prerequisitos` é a mais importante: ela representa as **arestas do grafo**. Cada linha diz "a disciplina X exige a disciplina Y como pré-requisito". O campo `bloco` indica se é obrigatório (1) ou co-requisito (2).
+
+---
+
+### `app/schemas.py` — Contratos da API (Pydantic)
+
+Define o formato exato de dados que a API aceita e retorna. Separado dos models por uma razão importante: **o que o banco armazena nem sempre é igual ao que a API expõe**.
+
+Por exemplo, o banco tem `tipo_disciplina` como enum Python, mas a API retorna a string `"OB"` ou `"OP"`. O schema faz essa conversão.
+
+Cada endpoint tem pelo menos um schema de entrada e um de saída:
+
+| Endpoint | Schema de entrada | Schema de saída |
+|---|---|---|
+| `GET /grafo` | — | `GrafoResponse` |
+| `POST /aluno/historico` | `HistoricoInput` | `HistoricoResponse` |
+| `GET /aluno/{matricula}/disponiveis` | — | `list[DisciplinaDisponivel]` |
+
+---
+
+### `app/main.py` — Ponto de entrada da API
+
+Cria a instância do FastAPI, configura o **CORS** e registra os routers.
+
+**CORS** (Cross-Origin Resource Sharing): o navegador bloqueia por segurança requisições de um domínio para outro. Como o frontend React roda em `localhost:5173` e a API em `localhost:8000`, o CORS precisa ser liberado explicitamente. Em produção, substituir pelo domínio real.
+
+---
+
+### `app/routers/disciplinas.py` — Rota `GET /grafo`
+
+Busca todas as disciplinas e todos os pré-requisitos do banco e retorna no formato `{ "nos": [...], "arestas": [...] }`, que o Cytoscape.js usa diretamente para renderizar o grafo no frontend.
+
+---
+
+### `app/routers/alunos.py` — Rotas de aluno
+
+Contém dois endpoints:
+
+**`POST /aluno/historico`**: recebe os dados do PDF de histórico (após processamento pelo `parse_historico.py`) e salva no banco. Cria o aluno e o histórico se não existirem, ou atualiza se já existirem. Disciplinas com códigos que não existem na grade são ignoradas silenciosamente.
+
+**`GET /aluno/{matricula}/disponiveis`**: implementa o algoritmo central do projeto. Para cada disciplina da grade ainda não aprovada, verifica se todos os pré-requisitos estão no histórico do aluno. As disponíveis são ordenadas por período sugerido.
+
+---
+
+### `scripts/parse_historico.py` — Parser do PDF de histórico
+
+Recebe o PDF do histórico parcial do SIGAA e extrai dois tipos de dado:
+- Dados cadastrais do aluno (matrícula, nome, CR)
+- Disciplinas com situação AP (Aprovado), com média e semestre
+
+Gera dois CSVs: `aluno_<matricula>.csv` e `historico_<matricula>.csv`. Esses arquivos são pessoais e **não devem ser commitados** (já estão no `.gitignore`).
+
+---
+
+### `scripts/parse_curriculo.py` — Parser do PDF de currículo
+
+Recebe o PDF do currículo do curso do SIGAA e extrai:
+- Todas as disciplinas com código, nome, créditos, tipo e período sugerido
+- Todos os pré-requisitos entre disciplinas (com bloco)
+
+Gera `disciplinas.csv` e `prerequisitos.csv`, que ficam em `scripts/seed/` e **são commitados** — são os dados públicos da grade curricular.
+
+---
+
+### `scripts/seed_db.py` — Popula o banco com o currículo
+
+Lê `disciplinas.csv` e `prerequisitos.csv` e insere os dados no PostgreSQL via SQLAlchemy. Seguro para rodar múltiplas vezes: registros já existentes são ignorados (`ON CONFLICT DO NOTHING`).
+
+Deve ser rodado uma vez após aplicar as migrations (`alembic upgrade head`).
+
+---
+
+### `alembic/` — Versionamento do banco
+
+Pasta criada e gerenciada pelo Alembic. Os arquivos dentro de `alembic/versions/` são o histórico de mudanças no schema do banco — equivalente ao `git log` do código.
+
+- `alembic.ini`: configurações gerais (URL do banco, localização dos scripts)
+- `alembic/env.py`: script que conecta o Alembic aos nossos models
+- `alembic/versions/`: cada arquivo é uma migration (uma versão do banco)
+
+**Nunca edite os arquivos de `versions/` manualmente.** Sempre use `alembic revision --autogenerate`.
+
+---
+
+### `tests/conftest.py` — Infraestrutura de testes
+
+Arquivo especial do Pytest que define **fixtures** — funções que preparam recursos antes dos testes e os limpam depois.
+
+As duas fixtures principais:
+
+- **`db_session`**: cria um banco SQLite em memória, cria todas as tabelas, e destrói tudo ao final do teste. Cada teste começa com banco limpo.
+- **`client`**: substitui o banco real (PostgreSQL) pelo banco de teste (SQLite) usando `dependency_overrides` do FastAPI, e retorna um cliente HTTP que chama os endpoints sem abrir porta de rede.
+
+O `StaticPool` é necessário porque o SQLite em memória cria um banco diferente por conexão. Com `StaticPool`, todas as sessões compartilham a mesma conexão e enxergam as mesmas tabelas.
+
+---
+
+### `tests/test_disciplinas.py` e `tests/test_alunos.py` — Testes
+
+Cada arquivo testa um router. Cada função que começa com `test_` é um teste independente.
+
+O padrão seguido em todos os testes é o **AAA**:
+1. **Arrange** (preparar): insere os dados necessários no banco de teste
+2. **Act** (agir): chama o endpoint via `client.get()` ou `client.post()`
+3. **Assert** (verificar): checa o status HTTP e o conteúdo da resposta
+
+---
+
 ## Dúvidas frequentes
 
 **O banco não conecta.**
