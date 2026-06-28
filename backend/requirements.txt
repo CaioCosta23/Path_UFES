@@ -1,6 +1,7 @@
 # --- dependências da aplicação ---
 fastapi[standard]>=0.115.0
 pdfplumber>=0.11.0
+networkx>=3.0
 
 # --- dependências geradas por pip freeze ---
 alabaster==1.0.0
