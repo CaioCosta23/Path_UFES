@@ -12,13 +12,13 @@ from app.models import prerequisitos as prereq_table
 MATRICULA = "2023999999"
 
 PAYLOAD_BASE = {
-    "matricula":         MATRICULA,
-    "nome":              "Aluno Teste",
-    "curso":             "Ciência da Computação",
-    "ano_ingresso":      2023,
-    "semestre_ingresso": 1,
-    "cr":                8.0,
-    "disciplinas":       [],
+    "matricula":        MATRICULA,
+    "nome":             "Aluno Teste",
+    "curso":            "Ciência da Computação",
+    "ano_ingresso":     2023,
+    "periodo_ingresso": "2023/1",
+    "cr":               8.0,
+    "disciplinas":      [],
 }
 
 

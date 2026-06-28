@@ -160,11 +160,11 @@ class Aluno(Base):
 
     __tablename__ = "alunos"
 
-    matricula          = Column(String, primary_key=True)
-    nome               = Column(String, nullable=False)
-    curso              = Column(String, nullable=False)
-    ano_ingresso       = Column(Integer, nullable=False)
-    semestre_ingresso  = Column(Integer, nullable=False)
+    matricula           = Column(String, primary_key=True)
+    nome                = Column(String, nullable=False)
+    curso               = Column(String, nullable=False)
+    ano_ingresso        = Column(Integer, nullable=False)
+    periodo_ingresso    = Column(String, nullable=False)
     quantidade_creditos = Column(Integer, default=0)
 
     historico = relationship("Historico", back_populates="aluno", uselist=False)

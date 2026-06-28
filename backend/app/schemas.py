@@ -58,13 +58,13 @@ class HistoricoInput(BaseModel):
     Recebe os dados cadastrais do aluno e suas disciplinas aprovadas,
     normalmente obtidos via parse_historico.py.
     """
-    matricula:          str
-    nome:               str
-    curso:              str
-    ano_ingresso:       int
-    semestre_ingresso:  int
-    cr:                 float | None = None
-    disciplinas:        list[DisciplinaAprovada]
+    matricula:        str
+    nome:             str
+    curso:            str
+    ano_ingresso:     int
+    periodo_ingresso: str
+    cr:               float | None = None
+    disciplinas:      list[DisciplinaAprovada]
 
 
 class HistoricoResponse(BaseModel):
