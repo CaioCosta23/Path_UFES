@@ -36,11 +36,11 @@ def salvar_historico(payload: HistoricoInput, db: Session = Depends(get_db)):
     aluno = db.get(Aluno, payload.matricula)
     if not aluno:
         aluno = Aluno(
-            matricula         = payload.matricula,
-            nome              = payload.nome,
-            curso             = payload.curso,
-            ano_ingresso      = payload.ano_ingresso,
-            semestre_ingresso = payload.semestre_ingresso,
+            matricula        = payload.matricula,
+            nome             = payload.nome,
+            curso            = payload.curso,
+            ano_ingresso     = payload.ano_ingresso,
+            periodo_ingresso = payload.periodo_ingresso,
         )
         db.add(aluno)
         db.flush()
