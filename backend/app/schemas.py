@@ -89,3 +89,57 @@ class DisciplinaDisponivel(BaseModel):
     creditos:         int
     tipo_disciplina:  str
     periodo_sugerido: int | None
+
+
+# ---------------------------------------------------------------------------
+# GET /aluno/{matricula}/trilha
+# ---------------------------------------------------------------------------
+
+class DisciplinaTrilha(BaseModel):
+    """
+    Entrada de uma disciplina (ou placeholder de optativa) na trilha.
+
+    Obrigatórias possuem ``codigo`` e ``nome`` reais. Placeholders de
+    optativas têm ``codigo=None`` e ``nome`` no formato "OptativaXX".
+    """
+    codigo:          str | None
+    nome:            str
+    creditos:        int | None
+    tipo_disciplina: str
+
+
+class OptativaPrevista(BaseModel):
+    """
+    Optativa com chance de ser ofertada em um semestre da trilha.
+
+    Listada separadamente abaixo das disciplinas do semestre para que o
+    aluno possa escolher qual optativa cursar no lugar do placeholder.
+    """
+    codigo:   str
+    nome:     str
+    creditos: int
+
+
+class SemestreTrilha(BaseModel):
+    """
+    Representa um semestre completo na trilha acadêmica sugerida.
+
+    ``disciplinas`` contém obrigatórias nomeadas e placeholders de optativas.
+    ``optativas_previstas`` lista as optativas que provavelmente serão
+    ofertadas nesse semestre e cujos pré-requisitos já foram cumpridos.
+    """
+    semestre:            str
+    tipo:                str
+    disciplinas:         list[DisciplinaTrilha]
+    optativas_previstas: list[OptativaPrevista]
+
+
+class TrilhaResponse(BaseModel):
+    """
+    Resposta do endpoint GET /aluno/{matricula}/trilha.
+
+    Contém a sequência de semestres com as disciplinas sugeridas para
+    o aluno concluir o curso.
+    """
+    matricula: str
+    semestres: list[SemestreTrilha]
