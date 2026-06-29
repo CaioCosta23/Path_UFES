@@ -141,18 +141,26 @@ def funcao(param: str) -> list[dict]:
 backend/
 ├── app/
 │   ├── database.py      # engine, SessionLocal, Base, get_db()
-│   ├── models.py        # todos os models SQLAlchemy
-│   └── routers/         # um arquivo por grupo de endpoints (ex: disciplinas.py, alunos.py)
+│   ├── models.py        # todos os models SQLAlchemy (inclui enum PeriodoOferta)
+│   ├── schemas.py       # schemas Pydantic de entrada e saída de cada endpoint
+│   └── routers/
+│       ├── disciplinas.py   # GET /grafo
+│       └── alunos.py        # POST /historico, GET /disponiveis, GET /trilha
 ├── alembic/
 │   └── versions/        # arquivos de migration — commitar sempre
 ├── scripts/
 │   ├── parse_historico.py   # parser do PDF de histórico do SIGAA
 │   ├── parse_curriculo.py   # parser do PDF de currículo do SIGAA
+│   ├── seed_db.py           # popula o banco com disciplinas, pré-requisitos e periodo_oferta
 │   └── seed/
 │       ├── disciplinas.csv      # grade curricular CC 2022 (commitar)
 │       ├── prerequisitos.csv    # arestas do grafo (commitar)
+│       ├── periodo_oferta.csv   # classificação PAR/ÍMPAR/AMBOS por disciplina (commitar)
 │       └── aluno_*.csv          # dados pessoais — NÃO commitar (.gitignore)
-├── main.py              # instância FastAPI, registra routers
+├── tests/
+│   ├── conftest.py          # fixtures: db_session, client (SQLite em memória)
+│   ├── test_disciplinas.py  # testes de GET /grafo
+│   └── test_alunos.py       # testes de POST /historico e GET /disponiveis
 └── requirements.txt
 ```
 
@@ -215,7 +223,7 @@ O banco segue o diagrama de classes em `docs/assets/diagrams/class/class_diagram
 
 | Tabela | O que armazena |
 |---|---|
-| `disciplinas` | Cada disciplina da grade (nó do grafo) |
+| `disciplinas` | Cada disciplina da grade (nó do grafo), incluindo `periodo_oferta` |
 | `prerequisitos` | Pré-requisitos entre disciplinas (arestas do grafo) |
 | `curriculos` | Versões da grade curricular (ex: CC 2022) |
 | `curriculo_disciplinas` | Quais disciplinas pertencem a qual currículo |
@@ -223,6 +231,12 @@ O banco segue o diagrama de classes em `docs/assets/diagrams/class/class_diagram
 | `historicos` | CR e créditos totais do aluno |
 | `historico_disciplinas` | Disciplinas aprovadas pelo aluno (nós visitados no grafo) |
 | `alembic_version` | Controle interno do Alembic — não modificar |
+
+O campo `periodo_oferta` na tabela `disciplinas` indica em qual tipo de semestre a disciplina costuma ser ofertada (`PAR`, `IMPAR` ou `AMBOS`). Esse dado foi gerado analisando 7 semestres de PDFs de ofertas dos departamentos DI, DMAT e DEE (2023/1 a 2026/1) e é usado pelo algoritmo de trilha para evitar agendar disciplinas em semestres em que não são oferecidas.
+
+A classificação usa regras diferentes por tipo de disciplina:
+- **Obrigatórias**: se a disciplina aparece em ≥ 2 semestres de um tipo e ≤ 1 do outro, é classificada pelo tipo dominante (a ocorrência isolada é considerada atípica)
+- **Optativas**: só é classificada como PAR ou ÍMPAR se aparece em **100%** dos semestres daquele tipo disponíveis; caso contrário, fica como AMBOS (não restringe o aluno)
 
 ---
 
@@ -274,6 +288,14 @@ Cada endpoint tem pelo menos um schema de entrada e um de saída:
 | `GET /grafo` | — | `GrafoResponse` |
 | `POST /aluno/historico` | `HistoricoInput` | `HistoricoResponse` |
 | `GET /aluno/{matricula}/disponiveis` | — | `list[DisciplinaDisponivel]` |
+| `GET /aluno/{matricula}/trilha` | — | `TrilhaResponse` |
+
+Os schemas de trilha merecem atenção especial:
+
+- **`DisciplinaTrilha`**: representa uma entrada em um semestre da trilha. Obrigatórias têm `codigo` e `nome` reais. Optativas aparecem como placeholders com `codigo=None` e `nome="Optativa01"`, `"Optativa02"` etc., pois não é possível prever quais optativas serão ofertadas nos semestres futuros.
+- **`OptativaPrevista`**: optativa que provavelmente será ofertada em determinado semestre (baseada no campo `periodo_oferta`). Listada separadamente para que o aluno escolha qual colocar no lugar do placeholder.
+- **`SemestreTrilha`**: agrupa um semestre completo — nome (`"2027/1"`), tipo (`"PAR"` ou `"IMPAR"`), a lista de disciplinas/placeholders e as optativas previstas.
+- **`TrilhaResponse`**: resposta final com matrícula e lista de semestres.
 
 ---
 
@@ -293,11 +315,29 @@ Busca todas as disciplinas e todos os pré-requisitos do banco e retorna no form
 
 ### `app/routers/alunos.py` — Rotas de aluno
 
-Contém dois endpoints:
+Contém três endpoints:
 
 **`POST /aluno/historico`**: recebe os dados do PDF de histórico (após processamento pelo `parse_historico.py`) e salva no banco. Cria o aluno e o histórico se não existirem, ou atualiza se já existirem. Disciplinas com códigos que não existem na grade são ignoradas silenciosamente.
 
-**`GET /aluno/{matricula}/disponiveis`**: implementa o algoritmo central do projeto. Para cada disciplina da grade ainda não aprovada, verifica se todos os pré-requisitos estão no histórico do aluno. As disponíveis são ordenadas por período sugerido.
+**`GET /aluno/{matricula}/disponiveis`**: para cada disciplina da grade ainda não aprovada, verifica se todos os pré-requisitos estão no histórico do aluno. As disponíveis são ordenadas por período sugerido.
+
+**`GET /aluno/{matricula}/trilha`**: gera a trilha acadêmica otimizada para o aluno concluir o curso no menor número de semestres. Recebe dois parâmetros via query string:
+- `semestre_inicio` (obrigatório): semestre a partir do qual planejar, ex: `"2026/2"`
+- `max_disciplinas` (opcional, padrão 5): quantas disciplinas por semestre (1–10)
+
+O algoritmo usa o **método do caminho crítico em calendário**:
+
+1. Carrega as disciplinas obrigatórias ainda não aprovadas como nós pendentes
+2. A cada semestre, filtra as disciplinas cujos pré-requisitos já foram cumpridos (aprovados no histórico ou agendados em semestres anteriores) **e** cuja oferta é compatível com o tipo do semestre (PAR/ÍMPAR/AMBOS)
+3. Ordena as disponíveis pela sua **profundidade de calendário** — quantos semestres são necessários para concluir toda a cadeia de dependências abaixo delas, incluindo penalidade de +1 semestre quando um sucessor tem restrição PAR/ÍMPAR incompatível com o semestre seguinte natural
+4. Agenda as `max_disciplinas` com maior profundidade (as que mais atrasam o curso se postergadas)
+5. Adiciona as disciplinas agendadas ao conjunto de "cumpridas", desbloqueando os pré-requisitos dos semestres seguintes
+6. Preenche os slots restantes com placeholders de optativas e lista as optativas prováveis para aquele semestre
+7. Repete até esgotar as obrigatórias (limite: 20 semestres, 40 iterações)
+
+> **Por que não basta ordenar por `periodo_sugerido`?** Porque uma disciplina com poucos sucessores pode ter `periodo_sugerido` menor que outra cujos sucessores têm restrições PAR/ÍMPAR que forçariam esperas extras de semestre. O caminho crítico em calendário considera esse custo real.
+
+As funções auxiliares `_proximo_semestre`, `_tipo_semestre`, `_compativel` e `_profundidade_calendario` ficam no mesmo arquivo, fora do router, por serem lógica pura sem efeitos colaterais.
 
 ---
 
@@ -323,9 +363,19 @@ Gera `disciplinas.csv` e `prerequisitos.csv`, que ficam em `scripts/seed/` e **s
 
 ### `scripts/seed_db.py` — Popula o banco com o currículo
 
-Lê `disciplinas.csv` e `prerequisitos.csv` e insere os dados no PostgreSQL via SQLAlchemy. Seguro para rodar múltiplas vezes: registros já existentes são ignorados (`ON CONFLICT DO NOTHING`).
+Lê `disciplinas.csv`, `prerequisitos.csv` e `periodo_oferta.csv` e insere/atualiza os dados no PostgreSQL via SQLAlchemy. Seguro para rodar múltiplas vezes: registros já existentes são ignorados ou atualizados (`ON CONFLICT DO NOTHING`).
 
 Deve ser rodado uma vez após aplicar as migrations (`alembic upgrade head`).
+
+---
+
+### `scripts/seed/periodo_oferta.csv` — Classificação de oferta por semestre
+
+Arquivo CSV com duas colunas (`codigo`, `periodo_oferta`) que classifica cada disciplina da grade em `PAR`, `IMPAR` ou `AMBOS`.
+
+Gerado pela análise de PDFs de ofertas dos departamentos DI, DMAT e DEE de 7 semestres (2023/1 a 2026/1). A metodologia está documentada na seção "Banco de dados" acima. **Não edite manualmente** — reprocesse os PDFs se houver novos dados.
+
+---
 
 ---
 
