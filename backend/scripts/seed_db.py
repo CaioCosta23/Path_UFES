@@ -1,9 +1,9 @@
 """
 Script de seed do banco de dados PathUFES.
 
-Lê os CSVs do currículo de CC (disciplinas e pré-requisitos) e os insere
-no banco PostgreSQL via SQLAlchemy. Seguro para rodar múltiplas vezes:
-registros já existentes são ignorados (upsert).
+Lê os CSVs do currículo de CC e os insere no banco PostgreSQL via SQLAlchemy.
+Seguro para rodar múltiplas vezes: disciplinas e pré-requisitos já existentes
+são ignorados; periodo_oferta é sempre atualizado com o valor do CSV.
 
 Uso: python scripts/seed_db.py
 """
@@ -17,13 +17,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.database import SessionLocal, engine
-from app.models import Base, Disciplina, TipoDisciplina, Departamento
+from app.models import Base, Disciplina, TipoDisciplina, Departamento, PeriodoOferta
 from app.models import prerequisitos as prereq_table
 
 
-SEED_DIR = Path(__file__).parent / "seed"
-DISCIPLINAS_CSV = SEED_DIR / "disciplinas.csv"
-PREREQS_CSV     = SEED_DIR / "prerequisitos.csv"
+SEED_DIR          = Path(__file__).parent / "seed"
+DISCIPLINAS_CSV   = SEED_DIR / "disciplinas.csv"
+PREREQS_CSV       = SEED_DIR / "prerequisitos.csv"
+PERIODO_OFERTA_CSV = SEED_DIR / "periodo_oferta.csv"
 
 
 def _tipo(valor: str) -> TipoDisciplina:
@@ -105,20 +106,48 @@ def seed_prerequisitos(session) -> int:
     return len(rows)
 
 
+def seed_periodo_oferta(session) -> int:
+    """
+    Atualiza o campo periodo_oferta de cada disciplina a partir do CSV.
+
+    Ao contrário das outras funções de seed, este método sempre sobrescreve
+    o valor existente, pois o CSV é a fonte de verdade para essa classificação.
+
+    :param session: Sessão SQLAlchemy ativa.
+    :return: Número de disciplinas atualizadas.
+    :rtype: int
+    """
+    with open(PERIODO_OFERTA_CSV, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    atualizadas = 0
+    for row in rows:
+        disc = session.get(Disciplina, row["codigo"].strip())
+        if disc:
+            disc.periodo_oferta = PeriodoOferta(row["periodo_oferta"].strip())
+            atualizadas += 1
+
+    session.commit()
+    return atualizadas
+
+
 def main():
     """
     Ponto de entrada do script de seed.
 
-    Cria as tabelas se não existirem e popula disciplinas e pré-requisitos.
+    Cria as tabelas se não existirem e popula disciplinas, pré-requisitos
+    e classificação de periodo_oferta (PAR/ÍMPAR/AMBOS).
     """
     Base.metadata.create_all(bind=engine)
 
     with SessionLocal() as session:
-        n_disc  = seed_disciplinas(session)
+        n_disc   = seed_disciplinas(session)
         n_prereq = seed_prerequisitos(session)
+        n_oferta = seed_periodo_oferta(session)
 
     print(f"{n_disc} disciplinas processadas.")
     print(f"{n_prereq} pre-requisitos processados.")
+    print(f"{n_oferta} disciplinas com periodo_oferta atualizado.")
 
 
 if __name__ == "__main__":
