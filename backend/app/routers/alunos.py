@@ -184,6 +184,7 @@ def _compativel(periodo_oferta, tipo: str) -> bool:
     Disciplinas com periodo_oferta AMBOS ou None são sempre compatíveis.
 
     :param periodo_oferta: Valor do enum PeriodoOferta da disciplina.
+    :type periodo_oferta: PeriodoOferta | None
     :param tipo: Tipo do semestre ('PAR' ou 'IMPAR').
     :type tipo: str
     :return: True se a disciplina pode ser cursada nesse tipo de semestre.

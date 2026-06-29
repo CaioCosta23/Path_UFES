@@ -24,7 +24,17 @@ PAYLOAD_BASE = {
 
 
 def _inserir_disciplina(db, codigo: str, nome: str, periodo: int = 1):
-    """Insere uma disciplina mínima no banco de teste."""
+    """
+    Insere uma disciplina obrigatória mínima no banco de teste.
+
+    :param db: Sessão do banco de teste.
+    :param codigo: Código da disciplina.
+    :type codigo: str
+    :param nome: Nome da disciplina.
+    :type nome: str
+    :param periodo: Período sugerido na grade curricular.
+    :type periodo: int
+    """
     db.execute(insert(Disciplina).values({
         "codigo":           codigo,
         "nome":             nome,
@@ -37,7 +47,15 @@ def _inserir_disciplina(db, codigo: str, nome: str, periodo: int = 1):
 
 
 def _inserir_prereq(db, disciplina: str, prereq: str):
-    """Insere uma relação de pré-requisito no banco de teste."""
+    """
+    Insere uma relação de pré-requisito no banco de teste.
+
+    :param db: Sessão do banco de teste.
+    :param disciplina: Código da disciplina que exige o pré-requisito.
+    :type disciplina: str
+    :param prereq: Código da disciplina exigida como pré-requisito.
+    :type prereq: str
+    """
     db.execute(insert(prereq_table).values(
         codigo_disciplina=disciplina,
         codigo_prereq=prereq,
@@ -58,10 +76,15 @@ def _inserir_disciplina_com_oferta(
 
     :param db: Sessão do banco de teste.
     :param codigo: Código da disciplina.
+    :type codigo: str
     :param nome: Nome da disciplina.
+    :type nome: str
     :param tipo: Tipo da disciplina (OB ou OP).
+    :type tipo: TipoDisciplina
     :param periodo_oferta: Restrição de semestre PAR/IMPAR/AMBOS (None = sem restrição).
+    :type periodo_oferta: PeriodoOferta | None
     :param periodo_sugerido: Período sugerido na grade curricular.
+    :type periodo_sugerido: int
     """
     values = {
         "codigo":           codigo,
