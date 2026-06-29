@@ -3,6 +3,13 @@ Schemas Pydantic do PathUFES.
 
 Define os contratos de entrada e saída de cada endpoint da API.
 FastAPI usa esses modelos para validar requests e serializar responses.
+
+Schemas por endpoint:
+- ``GET /grafo``                       → NoDisciplina, ArestaPrereq, GrafoResponse
+- ``POST /aluno/historico``            → DisciplinaAprovada, HistoricoInput, HistoricoResponse
+- ``GET /aluno/{matricula}/disponiveis`` → DisciplinaDisponivel
+- ``GET /aluno/{matricula}/trilha``    → DisciplinaTrilha, OptativaPrevista,
+                                          SemestreTrilha, TrilhaResponse
 """
 from pydantic import BaseModel
 
