@@ -1,0 +1,445 @@
+"""
+Router de alunos do PathUFES.
+
+Endpoints para cadastro de histórico acadêmico, sugestão de disciplinas
+disponíveis e geração de trilha acadêmica otimizada.
+
+O algoritmo de trilha usa o método do **caminho crítico em calendário**:
+a cada semestre, entre as disciplinas disponíveis, são priorizadas aquelas
+cuja cadeia de dependências exige mais semestres para ser concluída,
+levando em conta esperas causadas por restrições de PAR/ÍMPAR.
+"""
+from collections import defaultdict
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select, insert
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models import Aluno, Historico, Disciplina, PeriodoOferta, TipoDisciplina
+from app.models import historico_disciplinas as hist_disc_table
+from app.schemas import (
+    HistoricoInput, HistoricoResponse, DisciplinaDisponivel,
+    DisciplinaTrilha, OptativaPrevista, SemestreTrilha, TrilhaResponse,
+)
+
+router = APIRouter(prefix="/aluno", tags=["aluno"])
+
+
+@router.post("/historico", response_model=HistoricoResponse, status_code=201)
+def salvar_historico(payload: HistoricoInput, db: Session = Depends(get_db)):
+    """
+    Salva ou atualiza o histórico acadêmico de um aluno.
+
+    Cria o registro de Aluno e Historico caso não existam. Substitui
+    as disciplinas aprovadas existentes pelas recebidas no payload.
+
+    :param payload: Dados do aluno e disciplinas aprovadas.
+    :type payload: HistoricoInput
+    :param db: Sessão do banco de dados injetada pelo FastAPI.
+    :type db: Session
+    :return: Matrícula e quantidade de disciplinas salvas.
+    :rtype: HistoricoResponse
+    """
+    aluno = db.get(Aluno, payload.matricula)
+    if not aluno:
+        aluno = Aluno(
+            matricula        = payload.matricula,
+            nome             = payload.nome,
+            curso            = payload.curso,
+            ano_ingresso     = payload.ano_ingresso,
+            periodo_ingresso = payload.periodo_ingresso,
+        )
+        db.add(aluno)
+        db.flush()
+
+    historico = db.execute(
+        select(Historico).where(Historico.matricula == payload.matricula)
+    ).scalar_one_or_none()
+
+    if not historico:
+        historico = Historico(matricula=payload.matricula, cr=payload.cr)
+        db.add(historico)
+        db.flush()
+    else:
+        historico.cr = payload.cr
+        # Remove disciplinas antigas para reinserir atualizadas
+        db.execute(
+            hist_disc_table.delete().where(
+                hist_disc_table.c.historico_id == historico.id
+            )
+        )
+        db.flush()
+
+    codigos_validos = {
+        row[0] for row in db.execute(select(Disciplina.codigo)).all()
+    }
+
+    for disc in payload.disciplinas:
+        if disc.codigo not in codigos_validos:
+            continue
+        db.execute(
+            insert(hist_disc_table).values(
+                historico_id     = historico.id,
+                codigo_disciplina = disc.codigo,
+                media            = disc.media,
+                ano              = disc.ano,
+                semestre         = disc.semestre,
+            )
+        )
+
+    db.commit()
+    return HistoricoResponse(
+        matricula          = payload.matricula,
+        disciplinas_salvas = len(payload.disciplinas),
+    )
+
+
+@router.get("/{matricula}/disponiveis", response_model=list[DisciplinaDisponivel])
+def get_disponiveis(matricula: str, db: Session = Depends(get_db)):
+    """
+    Retorna as disciplinas que o aluno pode cursar no próximo semestre.
+
+    Uma disciplina está disponível quando ainda não foi aprovada e todos
+    os seus pré-requisitos já constam no histórico do aluno.
+
+    :param matricula: Matrícula do aluno.
+    :type matricula: str
+    :param db: Sessão do banco de dados injetada pelo FastAPI.
+    :type db: Session
+    :return: Lista de disciplinas disponíveis.
+    :rtype: list[DisciplinaDisponivel]
+    """
+    historico = db.execute(
+        select(Historico).where(Historico.matricula == matricula)
+    ).scalar_one_or_none()
+
+    if not historico:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado.")
+
+    aprovadas = {
+        row[0]
+        for row in db.execute(
+            select(hist_disc_table.c.codigo_disciplina).where(
+                hist_disc_table.c.historico_id == historico.id
+            )
+        ).all()
+    }
+
+    todas = db.execute(select(Disciplina)).scalars().all()
+
+    disponiveis = []
+    for disc in todas:
+        if disc.codigo in aprovadas:
+            continue
+        prereqs = {p.codigo for p in disc.pre_requisitos}
+        if prereqs.issubset(aprovadas):
+            disponiveis.append(
+                DisciplinaDisponivel(
+                    codigo           = disc.codigo,
+                    nome             = disc.nome,
+                    creditos         = disc.creditos,
+                    tipo_disciplina  = disc.tipo_disciplina.value,
+                    periodo_sugerido = disc.periodo_sugerido,
+                )
+            )
+
+    disponiveis.sort(key=lambda d: (d.periodo_sugerido or 99, d.nome))
+    return disponiveis
+
+
+# ---------------------------------------------------------------------------
+# Funções auxiliares para o algoritmo de trilha
+# ---------------------------------------------------------------------------
+
+def _proximo_semestre(semestre: str) -> str:
+    """
+    Retorna o semestre imediatamente seguinte.
+
+    :param semestre: Semestre atual no formato "AAAA/P" (ex: "2026/1").
+    :type semestre: str
+    :return: Próximo semestre no mesmo formato.
+    :rtype: str
+    """
+    ano, periodo = semestre.split('/')
+    return f"{ano}/2" if periodo == '1' else f"{int(ano) + 1}/1"
+
+
+def _tipo_semestre(semestre: str) -> str:
+    """
+    Retorna o tipo do semestre: 'IMPAR' para primeiro semestre, 'PAR' para segundo.
+
+    :param semestre: Semestre no formato "AAAA/P".
+    :type semestre: str
+    :return: 'IMPAR' ou 'PAR'.
+    :rtype: str
+    """
+    return 'IMPAR' if semestre.endswith('/1') else 'PAR'
+
+
+def _compativel(periodo_oferta, tipo: str) -> bool:
+    """
+    Verifica se uma disciplina pode ser ofertada no semestre do tipo dado.
+
+    Disciplinas com periodo_oferta AMBOS ou None são sempre compatíveis.
+
+    :param periodo_oferta: Valor do enum PeriodoOferta da disciplina.
+    :type periodo_oferta: PeriodoOferta | None
+    :param tipo: Tipo do semestre ('PAR' ou 'IMPAR').
+    :type tipo: str
+    :return: True se a disciplina pode ser cursada nesse tipo de semestre.
+    :rtype: bool
+    """
+    if periodo_oferta is None or periodo_oferta == PeriodoOferta.AMBOS:
+        return True
+    return periodo_oferta.value == tipo
+
+
+def _profundidade_calendario(
+    codigo: str,
+    tipo_deste: str,
+    pendentes_set: set,
+    requer_map: dict,
+    disc_map: dict,
+    memo: dict,
+) -> int:
+    """
+    Calcula a profundidade em semestres de calendário da cadeia de
+    dependências de uma disciplina, considerando esperas por PAR/ÍMPAR.
+
+    O valor retornado é o número de semestres necessários a partir do
+    semestre em que esta disciplina é cursada (inclusive) até a conclusão
+    do último elo da sua cadeia. Disciplinas que desbloqueiam sucessoras
+    com restrição PAR/ÍMPAR incompatível com o semestre imediatamente
+    seguinte recebem uma penalidade de +1 semestre de espera.
+
+    Este método é chamado para **ordenar** as disciplinas disponíveis:
+    a que possui maior profundidade é a que mais atrasa o curso se for
+    postergada, portanto deve ser priorizada.
+
+    :param codigo: Código da disciplina cujo caminho crítico será calculado.
+    :type codigo: str
+    :param tipo_deste: Tipo do semestre em que esta disciplina está sendo
+        agendada ('PAR' ou 'IMPAR').
+    :type tipo_deste: str
+    :param pendentes_set: Conjunto de códigos das disciplinas ainda pendentes.
+    :type pendentes_set: set
+    :param requer_map: Mapa ``{codigo → set de códigos que dependem dele}``.
+    :type requer_map: dict
+    :param disc_map: Mapa ``{codigo → Disciplina}`` para disciplinas pendentes.
+    :type disc_map: dict
+    :param memo: Cache de resultados já calculados para evitar recomputação.
+    :type memo: dict
+    :return: Profundidade em semestres de calendário (mínimo 1).
+    :rtype: int
+    """
+    key = (codigo, tipo_deste)
+    if key in memo:
+        return memo[key]
+
+    # Tipo do semestre imediatamente seguinte ao deste
+    tipo_proximo = 'PAR' if tipo_deste == 'IMPAR' else 'IMPAR'
+
+    # Disciplinas pendentes que dependem diretamente desta
+    sucessoras = [
+        disc_map[c]
+        for c in requer_map.get(codigo, set())
+        if c in pendentes_set
+    ]
+
+    if not sucessoras:
+        memo[key] = 1
+        return 1
+
+    max_cadeia = 0
+    for s in sucessoras:
+        if _compativel(s.periodo_oferta, tipo_proximo):
+            # S pode começar no semestre seguinte: sem espera adicional
+            cadeia = _profundidade_calendario(
+                s.codigo, tipo_proximo, pendentes_set, requer_map, disc_map, memo
+            )
+        else:
+            # S precisa esperar mais um semestre por restrição PAR/ÍMPAR
+            cadeia = 1 + _profundidade_calendario(
+                s.codigo, tipo_deste, pendentes_set, requer_map, disc_map, memo
+            )
+        max_cadeia = max(max_cadeia, cadeia)
+
+    result = 1 + max_cadeia
+    memo[key] = result
+    return result
+
+
+# ---------------------------------------------------------------------------
+# GET /aluno/{matricula}/trilha
+# ---------------------------------------------------------------------------
+
+@router.get("/{matricula}/trilha", response_model=TrilhaResponse)
+def get_trilha(
+    matricula: str,
+    semestre_inicio: str = Query(
+        ...,
+        description='Semestre a partir do qual gerar a trilha, ex: "2026/2"',
+    ),
+    max_disciplinas: int = Query(5, ge=1, le=10),
+    db: Session = Depends(get_db),
+):
+    """
+    Gera a trilha acadêmica otimizada para o aluno concluir o curso no menor
+    número de semestres possível.
+
+    **Algoritmo — Caminho Crítico em Calendário:**
+
+    A cada semestre, entre as disciplinas cujos pré-requisitos já foram
+    cumpridos e cuja oferta é compatível com o tipo do semestre (PAR/ÍMPAR),
+    o algoritmo prioriza aquelas com maior **profundidade de calendário**:
+    o número de semestres necessários para concluir toda a cadeia de
+    dependências abaixo delas, levando em conta esperas forçadas por
+    restrições PAR/ÍMPAR nos sucessores.
+
+    Isso garante que as disciplinas que mais atrasam o curso se postergadas
+    sejam sempre agendadas primeiro. Os slots restantes até ``max_disciplinas``
+    são preenchidos com placeholders de optativas ("Optativa01", ...), e para
+    cada semestre é calculada a lista de optativas prováveis compatíveis.
+
+    :param matricula: Matrícula do aluno.
+    :type matricula: str
+    :param semestre_inicio: Primeiro semestre da trilha (ex: "2026/2").
+    :type semestre_inicio: str
+    :param max_disciplinas: Número máximo de disciplinas por semestre (1–10).
+    :type max_disciplinas: int
+    :param db: Sessão do banco de dados injetada pelo FastAPI.
+    :type db: Session
+    :return: Trilha semestre a semestre com disciplinas e optativas previstas.
+    :rtype: TrilhaResponse
+    """
+    historico = db.execute(
+        select(Historico).where(Historico.matricula == matricula)
+    ).scalar_one_or_none()
+
+    if not historico:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado.")
+
+    # Disciplinas já aprovadas no histórico
+    aprovadas = {
+        row[0]
+        for row in db.execute(
+            select(hist_disc_table.c.codigo_disciplina).where(
+                hist_disc_table.c.historico_id == historico.id
+            )
+        ).all()
+    }
+
+    todas = db.execute(select(Disciplina)).scalars().all()
+
+    # Obrigatórias ainda não aprovadas
+    pendentes = [
+        d for d in todas
+        if d.tipo_disciplina == TipoDisciplina.OBRIGATORIA
+        and d.codigo not in aprovadas
+    ]
+
+    # Optativas ainda não aprovadas (usadas apenas na lista de previstas)
+    optativas = [
+        d for d in todas
+        if d.tipo_disciplina == TipoDisciplina.OPTATIVA
+        and d.codigo not in aprovadas
+    ]
+
+    # cumpridas acumula aprovadas + agendadas em semestres anteriores.
+    # Cada iteração adiciona as escolhidas, desbloqueando novos pré-requisitos.
+    cumpridas = set(aprovadas)
+
+    semestres: list[SemestreTrilha] = []
+    semestre_atual = semestre_inicio
+    MAX_SEMESTRES = 20
+    MAX_ITERACOES = 40  # guarda contra deadlock de PAR/ÍMPAR
+    iteracoes     = 0
+
+    while pendentes and len(semestres) < MAX_SEMESTRES and iteracoes < MAX_ITERACOES:
+        iteracoes += 1
+        tipo = _tipo_semestre(semestre_atual)
+
+        # Mapas reconstruídos a cada iteração para refletir as pendentes atuais
+        pendentes_set = {d.codigo for d in pendentes}
+        disc_map      = {d.codigo: d for d in pendentes}
+        requer_map: dict = defaultdict(set)
+        for d in pendentes:
+            for prereq in d.pre_requisitos:
+                requer_map[prereq.codigo].add(d.codigo)
+        memo: dict = {}
+
+        # Disciplinas prontas: pré-requisitos todos cumpridos E período compatível
+        prontas = [
+            d for d in pendentes
+            if all(p.codigo in cumpridas for p in d.pre_requisitos)
+            and _compativel(d.periodo_oferta, tipo)
+        ]
+
+        # Ordena pelo caminho crítico em calendário (descendente).
+        # Maior profundidade = mais atraso se postergada = deve ser feita primeiro.
+        prontas.sort(
+            key=lambda d: (
+                -_profundidade_calendario(
+                    d.codigo, tipo, pendentes_set, requer_map, disc_map, memo
+                ),
+                d.nome,
+            )
+        )
+
+        escolhidas = prontas[:max_disciplinas]
+
+        # Semestre sem obrigatórias disponíveis: avança (bloqueio de PAR/ÍMPAR)
+        if not escolhidas:
+            semestre_atual = _proximo_semestre(semestre_atual)
+            continue
+
+        # Monta a lista de disciplinas do semestre
+        disciplinas_semestre: list[DisciplinaTrilha] = [
+            DisciplinaTrilha(
+                codigo=d.codigo,
+                nome=d.nome,
+                creditos=d.creditos,
+                tipo_disciplina=d.tipo_disciplina.value,
+            )
+            for d in escolhidas
+        ]
+
+        # Slots restantes até max_disciplinas viram placeholders de optativas
+        for i in range(1, max_disciplinas - len(escolhidas) + 1):
+            disciplinas_semestre.append(
+                DisciplinaTrilha(
+                    codigo=None,
+                    nome=f"Optativa{i:02d}",
+                    creditos=None,
+                    tipo_disciplina="OP",
+                )
+            )
+
+        # Optativas prováveis: pré-requisitos cumpridos E período compatível
+        optativas_previstas: list[OptativaPrevista] = sorted(
+            [
+                OptativaPrevista(codigo=d.codigo, nome=d.nome, creditos=d.creditos)
+                for d in optativas
+                if all(p.codigo in cumpridas for p in d.pre_requisitos)
+                and _compativel(d.periodo_oferta, tipo)
+                and d.codigo not in cumpridas
+            ],
+            key=lambda o: o.nome,
+        )
+
+        semestres.append(SemestreTrilha(
+            semestre=semestre_atual,
+            tipo=tipo,
+            disciplinas=disciplinas_semestre,
+            optativas_previstas=optativas_previstas,
+        ))
+
+        # Adiciona escolhidas a cumpridas: desbloqueia pré-requisitos futuros
+        for d in escolhidas:
+            cumpridas.add(d.codigo)
+            pendentes.remove(d)
+
+        semestre_atual = _proximo_semestre(semestre_atual)
+
+    return TrilhaResponse(matricula=matricula, semestres=semestres)
