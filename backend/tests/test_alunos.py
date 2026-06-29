@@ -1,12 +1,13 @@
 """
-Testes dos endpoints POST /aluno/historico e GET /aluno/{matricula}/disponiveis.
+Testes dos endpoints POST /aluno/historico, GET /aluno/{matricula}/disponiveis
+e GET /aluno/{matricula}/trilha.
 
-Verifica o cadastro de histórico e a lógica de sugestão de disciplinas
-baseada nos pré-requisitos já cumpridos pelo aluno.
+Verifica o cadastro de histórico, a lógica de disciplinas disponíveis e o
+algoritmo de trilha acadêmica (caminho crítico em calendário com PAR/ÍMPAR).
 """
 from sqlalchemy import insert
 
-from app.models import Disciplina, TipoDisciplina, Departamento
+from app.models import Disciplina, TipoDisciplina, Departamento, PeriodoOferta
 from app.models import prerequisitos as prereq_table
 
 MATRICULA = "2023999999"
@@ -42,6 +43,38 @@ def _inserir_prereq(db, disciplina: str, prereq: str):
         codigo_prereq=prereq,
         bloco=1,
     ))
+
+
+def _inserir_disciplina_com_oferta(
+    db,
+    codigo: str,
+    nome: str,
+    tipo: TipoDisciplina = TipoDisciplina.OBRIGATORIA,
+    periodo_oferta: PeriodoOferta | None = None,
+    periodo_sugerido: int = 1,
+):
+    """
+    Insere disciplina com periodo_oferta definido para testes de trilha.
+
+    :param db: Sessão do banco de teste.
+    :param codigo: Código da disciplina.
+    :param nome: Nome da disciplina.
+    :param tipo: Tipo da disciplina (OB ou OP).
+    :param periodo_oferta: Restrição de semestre PAR/IMPAR/AMBOS (None = sem restrição).
+    :param periodo_sugerido: Período sugerido na grade curricular.
+    """
+    values = {
+        "codigo":           codigo,
+        "nome":             nome,
+        "creditos":         4,
+        "carga_horaria":    60,
+        "tipo_disciplina":  tipo,
+        "departamento":     Departamento.DI,
+        "periodo_sugerido": periodo_sugerido,
+    }
+    if periodo_oferta is not None:
+        values["periodo_oferta"] = periodo_oferta
+    db.execute(insert(Disciplina).values(values))
 
 
 # ---------------------------------------------------------------------------
@@ -143,3 +176,85 @@ def test_disponiveis_prereq_cumprido(client, db_session):
 
     assert "INF00001" not in codigos  # já aprovada, não aparece mais
     assert "INF00002" in codigos      # pré-req cumprido, agora disponível
+
+
+# ---------------------------------------------------------------------------
+# GET /aluno/{matricula}/trilha
+# ---------------------------------------------------------------------------
+
+def test_trilha_aluno_inexistente(client):
+    """Matrícula não cadastrada deve retornar 404."""
+    resp = client.get("/aluno/0000000000/trilha?semestre_inicio=2026/1")
+    assert resp.status_code == 404
+
+
+def test_trilha_respeita_periodo_oferta(client, db_session):
+    """Disciplina ÍMPAR não deve aparecer em semestre PAR e vice-versa."""
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc AMBOS",
+                                   periodo_oferta=PeriodoOferta.AMBOS)
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Disc IMPAR",
+                                   periodo_oferta=PeriodoOferta.IMPAR)
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    # semestre_inicio=2026/2 é PAR: INF00002 (ÍMPAR) não pode entrar no 1º semestre
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/2&max_disciplinas=1"
+    )
+    assert resp.status_code == 200
+    semestres = resp.json()["semestres"]
+
+    codigos_sem1 = [d["codigo"] for d in semestres[0]["disciplinas"]]
+    assert "INF00001" in codigos_sem1
+    assert "INF00002" not in codigos_sem1
+
+    # No semestre seguinte (2027/1, ÍMPAR), INF00002 deve aparecer
+    codigos_sem2 = [d["codigo"] for d in semestres[1]["disciplinas"]]
+    assert "INF00002" in codigos_sem2
+
+
+def test_trilha_prereq_desbloqueia_proximo_semestre(client, db_session):
+    """
+    Disciplina bloqueada por pré-requisito deve aparecer no semestre seguinte
+    após o pré-requisito ser agendado na trilha.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Base")
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Avancada")
+    _inserir_prereq(db_session, "INF00002", "INF00001")
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    # max_disciplinas=1: Base fica no sem 1, Avancada só pode no sem 2
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1&max_disciplinas=1"
+    )
+    assert resp.status_code == 200
+    semestres = resp.json()["semestres"]
+
+    assert semestres[0]["disciplinas"][0]["codigo"] == "INF00001"
+    assert semestres[1]["disciplinas"][0]["codigo"] == "INF00002"
+
+
+def test_trilha_gera_placeholder_optativa(client, db_session):
+    """Slots restantes até max_disciplinas devem virar placeholders 'OptativaXX'."""
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Unica Obrigatoria")
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    # max_disciplinas=2 com apenas 1 obrigatória → 1 slot vira placeholder
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1&max_disciplinas=2"
+    )
+    assert resp.status_code == 200
+    disciplinas = resp.json()["semestres"][0]["disciplinas"]
+
+    nomes = [d["nome"] for d in disciplinas]
+    assert "Unica Obrigatoria" in nomes
+    assert "Optativa01" in nomes
+    assert len(disciplinas) == 2
+    # placeholder não tem código
+    placeholder = next(d for d in disciplinas if d["nome"] == "Optativa01")
+    assert placeholder["codigo"] is None
