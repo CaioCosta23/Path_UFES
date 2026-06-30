@@ -3,6 +3,7 @@
     flex-direction: column;
     gap: var(--spacing-md);
     padding: var(--spacing-md);
+    overflow: hidden;
 }
 
 .container {
@@ -14,6 +15,8 @@
     box-shadow: var(--shadow);
     position: relative;
     z-index: 1;
+    overflow: hidden;
+    display: block;
 }
 
 .controls {
