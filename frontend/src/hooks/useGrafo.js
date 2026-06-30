@@ -1,11 +1,14 @@
 import {useState, useRef, useEffect} from "react";
 import cytoscape from "cytoscape";
+import {fetchMaterias, fetchRelacionamentos} from "../services/grafoService";
 
 export function useGrafo() {
     const cyRef = useRef(null);
     const containerRef = useRef(null);
     const [nos, setNos] = useState([]);
     const[arestas, setArestas] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [erro, setErro] = useState(null);
     const [elementoSelecionado, setElementoSelecionado] = useState(null);
 
     useEffect(() => {
@@ -112,6 +115,37 @@ export function useGrafo() {
         cyRef.current?.layout({name: "cose"}).run();
     };
 
+    const carregarDoBackEnd = async() => {
+        setLoading(true);
+        setErro(null);
+        
+        try {
+            const materias = await fetchMaterias();
+            const relacionamentos = await fetchRelacionamentos();
+
+            const nos = materias.map((materia) => ({
+                data: {
+                    id: String(materia.id),
+                    label: materia.nome,
+                },
+            }));
+
+            const arestas = relacionamentos.mao((rel) => ({
+                data: {
+                    id: `${rel.origem}-${rel.destino}`,
+                    source: String(rel.origem),
+                    target: String(rel.destino),
+                },
+            }));
+
+            carregarGrafo([...nos, ...arestas]);
+        }catch (err) {
+            setErro(err.message);
+        }finally {
+            setLoading(false);
+        }
+    }
+
     return {
         containerRef,
         nos,
@@ -123,5 +157,8 @@ export function useGrafo() {
         removerSelecionado,
         limparGrafo,
         reorganizarLayout,
+        loading,
+        erro,
+        carregarDoBackEnd
     };
 }
