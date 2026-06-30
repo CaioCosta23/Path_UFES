@@ -11,3 +11,7 @@ export function fetchRelacionamentos() {
 export function fetchMateria(id) {
     return api.get(`/materias/${id}`);
 }
+
+export function uploadPdf(file) {
+    return api.postFile("/upload-pdf", file);
+}

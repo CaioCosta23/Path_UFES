@@ -18,6 +18,16 @@ export const api = {
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify(data),
         }).then(handleResponse),
+
+    postFile: (endpoint, file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        return fetch(`${BASE_URL}${endpoint}`, {
+            method: "POST",
+            body: formData,
+        }).then(handleResponse);
+    },
     
     put: (endpoint, data) =>
         fetch(`${BASE_URL}${endpoint}`, {
