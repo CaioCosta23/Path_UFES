@@ -1,0 +1,87 @@
+codigo,nome,creditos,chs,tipo,periodo_sugerido,departamento
+INF15927,PROGRAMAÇÃO I,3,60,OB,1,DI
+INF16150,Aspectos Teóricos da Computação,4,60,OB,1,DI
+INF16151,Introdução à Ciência da Computação,3,60,OB,1,DI
+MAT15925,CÁLCULO I,6,90,OB,1,DMAT
+INF15973,LÓGICA PARA COMPUTAÇÃO I,4,60,OB,2,DI
+INF16152,Elementos de Lógica Digital,4,60,OB,2,DI
+INF16153,Programação II,3,60,OB,2,DI
+MAT15931,CÁLCULO II,4,60,OB,2,DMAT
+INF15974,ESTRUTURAS DE DADOS,3,60,OB,3,DI
+INF16154,Arquitetura e Organização de Computadores,3,60,OB,3,DI
+MAT15932,ÁLGEBRA LINEAR,4,60,OB,3,DMAT
+MAT15937,CÁLCULO IV,4,60,OB,3,DMAT
+STA15932,PROBABILIDADE E ESTATÍSTICA,4,60,OB,3,DMAT
+INF15933,PROGRAMAÇÃO ORIENTADA A OBJETOS,3,60,OB,4,DI
+INF15975,TÉCNICAS DE BUSCA E ORDENAÇÃO,3,60,OB,4,DI
+INF15980,SISTEMAS OPERACIONAIS,3,60,OB,4,DI
+INF16028,TEORIA DOS GRAFOS,4,60,OB,4,DI
+INF16155,Linguagens Formais e Autômatos,4,60,OB,4,DI
+INF15978,ENGENHARIA DE SOFTWARE I,4,60,OB,5,DI
+INF16013,LÓGICA PARA COMPUTAÇÃO II,4,60,OB,5,DI
+INF16156,Algoritmos Numéricos,3,60,OB,5,DI
+INF16157,Projeto Integrado I,3,60,OB,5,DI
+INF16158,Redes de Computadores,3,60,OB,5,DI
+INF16159,Computação e Sociedade,2,60,OB,6,DI
+INF16160,Engenharia de Software II,4,60,OB,6,DI
+INF16161,Paradigmas de Programação,3,60,OB,6,DI
+INF16162,Teoria da Computação,4,60,OB,6,DI
+INF15979,BANCO DE DADOS I,4,60,OB,7,DI
+INF16016,INTELIGÊNCIA ARTIFICIAL,3,60,OB,7,DI
+INF16163,Compiladores,3,60,OB,7,DI
+INF16164,Projeto e Análise de Algoritmos,4,60,OB,7,DI
+INF16165,Metodologia de Pesquisa Científica,3,60,OB,8,DI
+ELE15983,VISÃO COMPUTACIONAL,4,60,OP,*,DEE
+EPR13005,Gestão de Inovação e Empreendedorismo,4,60,OP,*,OUTRO
+INF15976,PROGRAMAÇÃO WEB,3,60,OP,*,DI
+INF15977,PROGRAMAÇÃO PARA DISPOSITIVOS MÓVEIS,3,60,OP,*,DI
+INF15981,INTRODUÇÃO À CIÊNCIA DE DADOS,4,60,OP,*,DI
+INF15984,PROGRAMAÇÃO LINEAR E INTRODUÇÃO À,4,60,OP,*,DI
+INF16014,COMPUTAÇÃO GRÁFICA,3,60,OP,*,DI
+INF16021,PROCESSAMENTO PARALELO,4,60,OP,*,DI
+INF16022,SEGURANÇA EM COMPUTAÇÃO,3,60,OP,*,DI
+INF16023,TÓPICOS EM LINGUAGENS DE PROGRAMAÇÃO,4,60,OP,*,DI
+INF16024,TÓPICOS EM OTIMIZAÇÃO,4,60,OP,*,DI
+INF16025,TÓPICOS EM SISTEMAS COMPUTACIONAIS,4,60,OP,*,DI
+INF16027,TÓPICOS EM TECNOLOGIA E INOVAÇÃO,4,60,OP,*,DI
+INF16169,Tópicos em Programação,4,60,OP,*,DI
+INF16170,Tópicos em Inteligência Computacional,4,60,OP,*,DI
+INF16171,Avaliação de Desempenho,4,60,OP,*,DI
+INF16172,Banco de Dados II,3,60,OP,*,DI
+INF16173,Computação Científica,3,60,OP,*,DI
+INF16174,Elementos Finitos,4,60,OP,*,DI
+INF16175,Empreendedorismo,4,60,OP,*,DI
+INF16176,Gerência de Projetos,4,60,OP,*,DI
+INF16177,Laboratório de Redes,2,60,OP,*,DI
+INF16178,Projeto Integrado II,3,60,OP,*,DI
+INF16179,Sistemas Distribuídos,3,60,OP,*,DI
+INF16180,Visão Computacional,4,60,OP,*,DI
+INF16181,Tópicos em Lógica para Computação,4,60,OP,*,DI
+INF16182,Processos Estocásticos,4,60,OP,*,DI
+INF16183,Interação Humano-Computador,3,60,OP,*,DI
+INF16184,Tópicos em Teoria da Computação,4,60,OP,*,DI
+INF16185,Projeto Integrado de Extensão,2,60,OP,*,DI
+INF17402,Blockchains e Smart Contracts,2,60,OP,*,DI
+INF17403,Robótica Probabilística,4,60,OP,*,DI
+INF17404,Programação Funcional,2,60,OP,*,DI
+INF17405,Sistemas Orientados a Eventos,3,60,OP,*,DI
+INF17406,Internet das Coisas,2,60,OP,*,DI
+INF17407,Meta-heurísticas,4,60,OP,*,DI
+INF17408,Desenvolvimento de Jogos,3,60,OP,*,DI
+INF17409,Inteligência Artificial em Saúde,3,60,OP,*,DI
+INF17410,Redes Programáveis,2,60,OP,*,DI
+INF17411,Business Intelligence e Gestão Baseada em Dados,3,60,OP,*,DI
+INF17412,Matemática para Ciência de Dados,4,60,OP,*,DI
+INF17413,Otimização para Ciência de Dados,4,60,OP,*,DI
+INF17414,Projeto de Inovação,2,60,OP,*,DI
+INF17415,Programação Competitiva,3,60,OP,*,DI
+INF17416,Generative Pre-Trained Transformers,4,60,OP,*,DI
+INF17417,Ontologias e Grafos de Conhecimento,4,60,OP,*,DI
+INF17418,Desenvolvimento Orientado a Modelos,4,60,OP,*,DI
+INF17419,Tópicos em Modelagem Conceitual,4,60,OP,*,DI
+INF17420,Tópicos em Sistemas de Informação,4,60,OP,*,DI
+INF17421,Tópicos em Engenharia de Software,4,60,OP,*,DI
+LET16015,FUNDAMENTOS DA LÍNGUA BRASILEIRA DE SINAIS,4,60,OP,*,OUTRO
+INF16186,Estágio Supervisionado,6,200,EC,*,DI
+INF16187,Trabalho de Conclusão de Curso I,5,120,OB,9,DI
+INF16188,Trabalho de Conclusão de Curso II,5,120,OB,10,DI
