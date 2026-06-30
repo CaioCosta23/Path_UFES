@@ -12,6 +12,7 @@ export default function GrafoViewer() {
         erro,
         adicionarNo,
         adicionarAresta,
+        carregarDePdf,
         carregarGrafo,
         carregarDoBackend,
         removerSelecionado,
@@ -53,9 +54,17 @@ export default function GrafoViewer() {
         reader.readAsText(file);
     };
 
+    const handleUploadPdf = (event) => {
+        const file = event.target.files[0];
+        if (!file)
+            return;
+
+        carregarDePdf(file);
+    }
+
     return (
         <div className={styles.wrapper}>
-            <div className={styles.wrapper}>
+            <div className={styles.controls}>
                 <button
                     className={styles.button}
                     onClick={carregarDoBackend}
@@ -63,6 +72,17 @@ export default function GrafoViewer() {
                 >
                     {loading ? "Carregando ..." : "Carregar matérias"}
                 </button>
+
+                <label className = {styles.button}>
+                    {loading ? "Processando..." : "Enviar PDF"}
+                    <input
+                        type = "file"
+                        accept = ".pdf"
+                        onChange = {handleUploadPdf}
+                        disabled = {loading}
+                        style = {{display: "none"}}
+                    />
+                </label>
             </div>
             {/*Barra de controles de nós*/}
             <div className={styles.controls}>
