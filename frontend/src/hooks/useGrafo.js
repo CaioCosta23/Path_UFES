@@ -115,7 +115,7 @@ export function useGrafo() {
         cyRef.current?.layout({name: "cose"}).run();
     };
 
-    const carregarDoBackEnd = async() => {
+    const carregarDoBackend = async() => {
         setLoading(true);
         setErro(null);
         
@@ -186,7 +186,7 @@ export function useGrafo() {
         reorganizarLayout,
         loading,
         erro,
-        carregarDoBackEnd,
+        carregarDoBackend,
         carregarDePdf,
     };
 }
