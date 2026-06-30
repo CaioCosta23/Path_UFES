@@ -68,7 +68,7 @@ export default function GrafoViewer() {
                 <button
                     className={styles.button}
                     onClick={carregarDoBackend}
-                    disable={loading}
+                    disabled={loading}
                 >
                     {loading ? "Carregando ..." : "Carregar matérias"}
                 </button>
@@ -106,12 +106,12 @@ export default function GrafoViewer() {
                 </button>
             </div>
 
-            <div cassName = {styles.controls}>
+            <div className = {styles.controls}>
                 <input
                     type = "text"
                     placeholder = "Nó de origem"
                     value = {arestaSource}
-                    onchange = {(e) => setArestaSource(e.target.value)}
+                    onChange = {(e) => setArestaSource(e.target.value)}
                 />
                 <input
                     type = "text"
