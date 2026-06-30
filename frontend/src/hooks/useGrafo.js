@@ -12,6 +12,7 @@ export function useGrafo() {
     const [elementoSelecionado, setElementoSelecionado] = useState(null);
 
     useEffect(() => {
+        console.log("containerRef:", containerRef.current);
         if (!containerRef.current)
             return;
 
@@ -22,11 +23,11 @@ export function useGrafo() {
                 {
                     selector: "node",
                     style: {
-                        "background-color": "var(--graph-node)",
-                        "border-color": "var(--graph-node-hover)",
+                        "background-color": "#4f46e5",
+                        "border-color": "#4338ca",
                         "border-width": 2,
                         label: "data(label)",
-                        color: "var(--graph-node-label)",
+                        color: "#1a202c",
                         "font-size": "14px",
                         "text-valign":"center",
                         "text-halign": "center",
@@ -35,23 +36,30 @@ export function useGrafo() {
                 {
                     selector: "node:selected",
                     style: {
-                        "background-color": "var(--graph-node-hover)",
+                        "background-color": "#4338ca",
                     },
                 },
                 {
-                    selector: "node:activate",
+                    selector: "node:active",
                     style: {
-                        "background-color": "var(--graph-node-hover)",
+                        "background-color": "#4338ca",
                     },
                 },
                 {
                     selector: "edge",
                     style: {
-                        "line-color": "var(--graph-edge)",
+                        "line-color": "#94a3b8",
                         width: 2,
                         "curve-style": "bezier",
                         "target-arrow-shape": "triangle",
-                        "target-arrow-color": "var(--graph-edge)",
+                        "target-arrow-color": "#94a3b8",
+                    },
+                },
+                {
+                    selector: "edge:selected",
+                    style: {
+                        "line-color": "#10b981",
+                        "target-arrow-color": "#10b981"
                     },
                 },
             ],
@@ -93,8 +101,8 @@ export function useGrafo() {
     const carregarGrafo = (elementos) => {
         if (!elementos) 
             return;
-        cyRef.current?.elements.remove();
-        cyRef.current?.add(elementos);
+        cyRef.current.elements().remove();
+        cyRef.current.add(elementos);
         cyRef.current.layout({name: "cose"}).run();
         setNos(elementos.filter((el) => !el.data.source));
         setArestas(elementos.filter((el) => el.data.source));
