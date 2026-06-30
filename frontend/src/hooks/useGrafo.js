@@ -63,7 +63,12 @@ export function useGrafo() {
                     },
                 },
             ],
-            layout: {name: "cose"},
+            layout: {name: "grid"},
+            fit: true,
+            padding: 30,
+            minZoom: 0.5,
+            maxZoom: 3,
+            wheelSensitivity: 0.3,
         });
 
         cyRef.current.on("select", "node", "edge", (event) => {
@@ -103,7 +108,14 @@ export function useGrafo() {
             return;
         cyRef.current.elements().remove();
         cyRef.current.add(elementos);
-        cyRef.current.layout({name: "cose"}).run();
+        cyRef.current.layout({
+            name: "cose",
+            fit: true, 
+            padding: 30,
+            animete: false,}).run();
+
+            cyRef.current.fit();
+            cyRef.current.center();
         setNos(elementos.filter((el) => !el.data.source));
         setArestas(elementos.filter((el) => el.data.source));
     };
@@ -120,7 +132,11 @@ export function useGrafo() {
     };
 
     const reorganizarLayout = () => {
-        cyRef.current?.layout({name: "cose"}).run();
+        cyRef.current?.layout({
+            name: "cose",
+            fit: true, 
+            padding: 30,
+            animete: false,}).run();
     };
 
     const carregarDoBackend = async() => {
