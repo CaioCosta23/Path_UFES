@@ -48,6 +48,10 @@ export default function GrafoViewer() {
                 const elementos = JSON.parse(e.target.result);
                 carregarGrafo(elementos);
             }catch {
+                /*
+                console.error("Erro ao carregar arquivo:", err);
+                alert(`Arquivo inválido: ${err.message}`);
+                 */
                 alert("Arquivo invalido. Use um JSON válido.");
             }
         };
