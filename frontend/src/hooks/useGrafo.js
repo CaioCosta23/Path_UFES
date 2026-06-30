@@ -1,6 +1,6 @@
 import {useState, useRef, useEffect} from "react";
 import cytoscape from "cytoscape";
-import {fetchMaterias, fetchRelacionamentos, uploadPdf} from "../services/grafoService";
+import {fetchGrafo, uploadPdf} from "../services/grafoService";
 
 export function useGrafo() {
     const cyRef = useRef(null);
@@ -126,23 +126,22 @@ export function useGrafo() {
     const carregarDoBackend = async() => {
         setLoading(true);
         setErro(null);
-        
-        try {
-            const materias = await fetchMaterias();
-            const relacionamentos = await fetchRelacionamentos();
 
-            const nos = materias.map((materia) => ({
+        try {
+            const grafo = await fetchGrafo();
+
+            const nos = grafo.nos.map((no) => ({
                 data: {
-                    id: String(materia.id),
-                    label: materia.nome,
+                    id: no.id,
+                    label: no.nome,
                 },
             }));
 
-            const arestas = relacionamentos.mao((rel) => ({
+            const arestas = grafo.arestas.map((aresta) => ({
                 data: {
-                    id: `${rel.origem}-${rel.destino}`,
-                    source: String(rel.origem),
-                    target: String(rel.destino),
+                    id: `${aresta.source}-${aresta.target}`,
+                    source: aresta.source,
+                    target: aresta.target,
                 },
             }));
 
@@ -156,7 +155,7 @@ export function useGrafo() {
 
     const carregarDePdf = async (file) => {
         setLoading(true);
-        setArestas(null);
+        setErro(null);
 
         try {
             const dados = await uploadPdf(file);
