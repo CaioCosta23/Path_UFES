@@ -3,7 +3,7 @@
     flex-direction: column;
     gap: var(--spacing-xl);
     padding: var(--spacing-xl) var(--spacing-lg);
-    min-width: 900px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
@@ -29,7 +29,7 @@
     font-size: var(--font-size-base);
     color: var(--color-text-muted);
     line-height: 1.7;
-    min-width: 700px;
+    max-width: 700px;
 }
 
 .githubLink {
@@ -47,7 +47,7 @@
     transition: background-color var(--transition);
 }
 
-.github:hover {
+.githubLink:hover {
     background-color: azure;
     color: black;
 }

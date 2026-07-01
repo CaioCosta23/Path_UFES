@@ -32,7 +32,7 @@ export const api = {
     put: (endpoint, data) =>
         fetch(`${BASE_URL}${endpoint}`, {
             method: "PUT",
-            headers: {"Content-Type": "application.json"},
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify(data),
         }).then(handleResponse),
 
