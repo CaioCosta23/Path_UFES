@@ -1,5 +1,5 @@
 import GrafoViewer from "../components/GrafoViewer";
-import styles from "../styles/GrafoPage.module.css";
+import styles from "../styles/Grafo.module.css";
 
 export default function Grafo() {
     return (
