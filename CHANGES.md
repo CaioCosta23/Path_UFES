@@ -70,7 +70,7 @@ CMD ["fastapi", "run", "app/main.py", "--port", "8000"]
 ## 4. Upload de histórico via PDF (`frontend/src/services/grafoService.js`)
 
 Adicionada função `uploadPdf` que chama a nova rota do backend para importar
-o histórico acadêmico do aluno a partir de um PDF do SIGAA/UFES:
+o histórico acadêmico do aluno a partir de um PDF do SIE/UFES:
 
 ```js
 // ANTES: chamava rota inexistente
@@ -123,7 +123,7 @@ Isso é renderizado pelo campo `alunoImportado` exposto pelo hook `useGrafo`.
 
 ## 7. Novo endpoint: `POST /aluno/upload-pdf` (backend)
 
-Endpoint que recebe o PDF do histórico parcial do SIGAA/UFES, extrai os dados
+Endpoint que recebe o PDF do histórico parcial do SIE/UFES, extrai os dados
 do aluno e suas disciplinas aprovadas usando `pdfplumber`, e salva tudo no
 banco de dados.
 

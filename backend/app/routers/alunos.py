@@ -30,12 +30,12 @@ router = APIRouter(prefix="/aluno", tags=["aluno"])
 
 
 # ---------------------------------------------------------------------------
-# Helpers de parsing do PDF do SIGAA/UFES
+# Helpers de parsing do PDF do SIE/UFES
 # ---------------------------------------------------------------------------
 
 def _parse_aluno_pdf(texto: str) -> dict:
     """
-    Extrai os dados cadastrais do aluno do cabeçalho do histórico SIGAA.
+    Extrai os dados cadastrais do aluno do cabeçalho do histórico SIE.
 
     :param texto: Texto completo extraído do PDF.
     :type texto: str
@@ -70,7 +70,7 @@ def _parse_aluno_pdf(texto: str) -> dict:
 
 def _parse_historico_pdf(texto: str) -> list[dict]:
     """
-    Extrai as disciplinas aprovadas (situação AP) do histórico SIGAA.
+    Extrai as disciplinas aprovadas (situação AP) do histórico SIE.
 
     :param texto: Texto completo extraído do PDF.
     :type texto: str
@@ -125,12 +125,12 @@ def upload_historico_pdf(
     db:   Session    = Depends(get_db),
 ):
     """
-    Importa o histórico acadêmico de um aluno a partir do PDF do SIGAA/UFES.
+    Importa o histórico acadêmico de um aluno a partir do PDF do SIE/UFES.
 
     Extrai os dados cadastrais e as disciplinas aprovadas do PDF, cria ou
     atualiza o registro do aluno e seu histórico no banco de dados.
 
-    :param file: Arquivo PDF do histórico parcial exportado pelo SIGAA.
+    :param file: Arquivo PDF do histórico parcial exportado pelo SIE.
     :type file: UploadFile
     :param db: Sessão do banco de dados injetada pelo FastAPI.
     :type db: Session

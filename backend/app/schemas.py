@@ -92,7 +92,7 @@ class HistoricoResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class UploadPdfResponse(BaseModel):
-    """Resposta após importar o histórico acadêmico a partir de um PDF do SIGAA."""
+    """Resposta após importar o histórico acadêmico a partir de um PDF do SIE."""
     matricula:              str
     nome:                   str
     disciplinas_importadas: int
