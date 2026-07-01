@@ -1,6 +1,7 @@
 import {useState} from "react"
 import {useGrafo} from "../hooks/useGrafo";
 import styles from "../styles/GrafoViewer.module.css"
+import Sidebar from "./Sidebar";
 
 export default function GrafoViewer() {
     const {
@@ -25,6 +26,7 @@ export default function GrafoViewer() {
     const [noLabel, setNoLabel] = useState("");
     const [arestaSource, setArestaSource] = useState("");
     const [arestaTarget, setArestaTarget] = useState("");
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const handleAdicionarNo = () => {
         adicionarNo(noId, noLabel);
@@ -69,7 +71,18 @@ export default function GrafoViewer() {
 
     return (
         <div className={styles.wrapper}>
+            <Sidebar
+                isOpen = {sidebarOpen}
+                onClose = {() => setSidebarOpen(false)}
+                elementoSelecionado = {elementoSelecionado}
+            />
             <div className={styles.controls}>
+                <button
+                    className = {styles.button}
+                    onClick = {() =>setSidebarOpen(true)}
+                >
+                    = Detalhes
+                </button>
                 <button
                     className={styles.button}
                     onClick={carregarDoBackend}

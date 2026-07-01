@@ -25,6 +25,8 @@ a:hover {
 main {
     padding: var(--spacing-lg);
     min-height: calc(100vh - 64px);
+    position: relative;
+    z-index: 0;
 }
 
 button {
