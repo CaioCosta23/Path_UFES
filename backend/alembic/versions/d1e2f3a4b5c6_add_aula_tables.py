@@ -19,21 +19,33 @@ down_revision: Union[str, Sequence[str], None] = '0d78acc04dcc'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+# create_type=False: impede que op.create_table tente criar o tipo enum novamente;
+# o tipo é criado via IF NOT EXISTS no upgrade() abaixo.
 _diasemana = sa.Enum(
     'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA',
     name='diasemana',
+    create_type=False,
 )
 _horario = sa.Enum(
     'H07_08', 'H08_09', 'H09_10', 'H10_11', 'H11_12', 'H12_13',
     'H13_14', 'H14_15', 'H15_16', 'H16_17', 'H17_18', 'H18_19',
     name='horario',
+    create_type=False,
 )
 
 
 def upgrade() -> None:
     """Cria tabelas e tipos de enum para aulas."""
-    _diasemana.create(op.get_bind(), checkfirst=True)
-    _horario.create(op.get_bind(), checkfirst=True)
+    # IF NOT EXISTS evita DuplicateObject caso create_all já tenha criado os tipos.
+    op.execute(
+        "CREATE TYPE IF NOT EXISTS diasemana AS ENUM "
+        "('SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA')"
+    )
+    op.execute(
+        "CREATE TYPE IF NOT EXISTS horario AS ENUM "
+        "('H07_08', 'H08_09', 'H09_10', 'H10_11', 'H11_12', 'H12_13', "
+        "'H13_14', 'H14_15', 'H15_16', 'H16_17', 'H17_18', 'H18_19')"
+    )
 
     op.create_table(
         'aulas',
@@ -63,5 +75,5 @@ def downgrade() -> None:
     op.drop_table('aula_horarios')
     op.drop_table('aula_dias')
     op.drop_table('aulas')
-    _horario.drop(op.get_bind(), checkfirst=True)
-    _diasemana.drop(op.get_bind(), checkfirst=True)
+    op.execute("DROP TYPE IF EXISTS horario")
+    op.execute("DROP TYPE IF EXISTS diasemana")
