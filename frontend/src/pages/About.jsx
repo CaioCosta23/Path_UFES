@@ -4,14 +4,14 @@ export default function About() {
     return (
         <div className = {styles.container}>
             {/* Sobre o projeto */}
-            <section className = {styles.selection}>
+            <section className = {styles.section}>
                 <h1 className = {styles.title}>SOBRE O PROJETO</h1>
                 <p>
                     Este projeto é uma ferrameta...
                     Acesse o nosso repositório para mais informçãoes.
                 </p>
                 <p>
-                    Acesse o nosso repositório <a href = "https://github.com/CaioCosta23/Path_UFES.git" target = "blank" rel = "noopener noreferrer" className = {styles.githubLink}>GitHub.</a> para mais informçãoes.
+                    Acesse o nosso repositório <a href = "https://github.com/CaioCosta23/Path_UFES.git" target = "_blank" rel = "noopener noreferrer" className = {styles.githubLink}>GitHub.</a> para mais informçãoes.
                 </p>
             </section>
 
