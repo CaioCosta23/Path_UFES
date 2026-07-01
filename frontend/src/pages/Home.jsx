@@ -1,6 +1,8 @@
 import {Link} from "react-router-dom";
 import styles from "../styles/Home.module.css"
 
+import {FileText, Link2, Search} from "lucide-react"
+
 export default function Home() {
     return (
         <div className = {styles.container}>
@@ -20,19 +22,19 @@ export default function Home() {
 
             <div className= {styles.features}>
                 <div className = {styles.featureCard}>
-                    <span className = {styles.featureIcon}>paper</span>
+                    <FileText className = {styles.featureIcon}/>
                     <h3>Upload de PDF</h3>
                     <p>Envie sua grade curricular para que o sistema extraia as matérias</p>
                 </div>
 
                 <div className = {styles.featureCard}>
-                    <span className = {styles.featureIcon}>link</span>
+                    <Link2 className = {styles.featureIcon}/>
                     <h3>Pré-Requisitos</h3>
                     <p>Visualize as conexões entre as matérias e ennteda a ordem ideal de seu currículo.</p>
                 </div>
 
                 <div className = {styles.featureCard}>
-                    <span className = {styles.featureIcon}>search</span>
+                    <Search className = {styles.featureIcon}/>
                     <h3>Interativo</h3>
                     <p>Clique nos nós para ver detalhes, adicione ou remova matérias manualmente.</p>
                 </div>
