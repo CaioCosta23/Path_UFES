@@ -1,6 +1,6 @@
 import {useState, useRef, useEffect} from "react";
 import cytoscape from "cytoscape";
-import {fetchMaterias, fetchRelacionamentos, uploadPdf} from "../services/grafoService";
+import {fetchGrafo, uploadPdf} from "../services/grafoService";
 
 export function useGrafo() {
     const cyRef = useRef(null);
@@ -10,6 +10,7 @@ export function useGrafo() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState(null);
     const [elementoSelecionado, setElementoSelecionado] = useState(null);
+    const [alunoImportado, setAlunoImportado] = useState(null);
 
     useEffect(() => {
         console.log("containerRef:", containerRef.current);
@@ -63,12 +64,7 @@ export function useGrafo() {
                     },
                 },
             ],
-            layout: {name: "grid"},
-            fit: true,
-            padding: 30,
-            minZoom: 0.5,
-            maxZoom: 3,
-            wheelSensitivity: 0.3,
+            layout: {name: "cose"},
         });
 
         cyRef.current.on("select", "node", "edge", (event) => {
@@ -108,14 +104,7 @@ export function useGrafo() {
             return;
         cyRef.current.elements().remove();
         cyRef.current.add(elementos);
-        cyRef.current.layout({
-            name: "cose",
-            fit: true, 
-            padding: 30,
-            animete: false,}).run();
-
-            cyRef.current.fit();
-            cyRef.current.center();
+        cyRef.current.layout({name: "cose"}).run();
         setNos(elementos.filter((el) => !el.data.source));
         setArestas(elementos.filter((el) => el.data.source));
     };
@@ -132,33 +121,28 @@ export function useGrafo() {
     };
 
     const reorganizarLayout = () => {
-        cyRef.current?.layout({
-            name: "cose",
-            fit: true, 
-            padding: 30,
-            animete: false,}).run();
+        cyRef.current?.layout({name: "cose"}).run();
     };
 
     const carregarDoBackend = async() => {
         setLoading(true);
         setErro(null);
-        
-        try {
-            const materias = await fetchMaterias();
-            const relacionamentos = await fetchRelacionamentos();
 
-            const nos = materias.map((materia) => ({
+        try {
+            const grafo = await fetchGrafo();
+
+            const nos = grafo.nos.map((no) => ({
                 data: {
-                    id: String(materia.id),
-                    label: materia.nome,
+                    id: no.id,
+                    label: no.nome,
                 },
             }));
 
-            const arestas = relacionamentos.mao((rel) => ({
+            const arestas = grafo.arestas.map((aresta) => ({
                 data: {
-                    id: `${rel.origem}-${rel.destino}`,
-                    source: String(rel.origem),
-                    target: String(rel.destino),
+                    id: `${aresta.source}-${aresta.target}`,
+                    source: aresta.source,
+                    target: aresta.target,
                 },
             }));
 
@@ -172,24 +156,12 @@ export function useGrafo() {
 
     const carregarDePdf = async (file) => {
         setLoading(true);
-        setArestas(null);
+        setErro(null);
+        setAlunoImportado(null);
 
         try {
             const dados = await uploadPdf(file);
-
-            const nos = dados.materias.map((materia) => ({
-                data: {id: String(materia.id), label: materia.nome},
-            }));
-
-            const arestas = dados.relacionamentos.map((rel) =>({
-                data: {
-                    id: `${rel.origem}-${rel.destino}`,
-                    source: String(rel.origem),
-                    target: String(rel.destino),
-                },
-            }));
-
-            carregarGrafo([...nos, ...arestas]);
+            setAlunoImportado(dados);
         }catch (err) {
             setErro(err.message);
         }finally {
@@ -202,6 +174,7 @@ export function useGrafo() {
         nos,
         arestas,
         elementoSelecionado,
+        alunoImportado,
         adicionarNo,
         adicionarAresta,
         carregarGrafo,
