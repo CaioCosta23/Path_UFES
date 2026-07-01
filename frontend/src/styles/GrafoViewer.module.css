@@ -54,7 +54,7 @@
     border-radius: var(--border-radius);
     padding: var(--spacing-md);
     font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
+    color: orange;
 }
 
 @media (max-width:760px) {
