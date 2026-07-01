@@ -1,5 +1,5 @@
 """
-Parser para o Currículo de Cursos (PDF do SIGAA/UFES).
+Parser para o Currículo de Cursos (PDF do SIE/UFES).
 Gera dois CSVs: disciplinas (com departamento inferido) e pré-requisitos.
 
 Uso: python parse_curriculo.py <curriculo.pdf> <disciplinas.csv> <prerequisitos.csv>

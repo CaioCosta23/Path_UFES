@@ -1,5 +1,5 @@
 """
-Parser para o Histórico Parcial por Aluno (PDF do SIGAA/UFES).
+Parser para o Histórico Parcial por Aluno (PDF do SIE/UFES).
 Gera dois CSVs: dados cadastrais do aluno e disciplinas aprovadas.
 
 Uso: python parse_historico.py <historico.pdf> <aluno.csv> <historico.csv>

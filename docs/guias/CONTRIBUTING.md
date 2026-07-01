@@ -145,12 +145,12 @@ backend/
 │   ├── schemas.py       # schemas Pydantic de entrada e saída de cada endpoint
 │   └── routers/
 │       ├── disciplinas.py   # GET /grafo
-│       └── alunos.py        # POST /historico, GET /disponiveis, GET /trilha
+│       └── alunos.py        # POST /historico, POST /upload-pdf, GET /disponiveis, GET /trilha
 ├── alembic/
 │   └── versions/        # arquivos de migration — commitar sempre
 ├── scripts/
-│   ├── parse_historico.py   # parser do PDF de histórico do SIGAA
-│   ├── parse_curriculo.py   # parser do PDF de currículo do SIGAA
+│   ├── parse_historico.py   # parser do PDF de histórico do SIE
+│   ├── parse_curriculo.py   # parser do PDF de currículo do SIE
 │   ├── seed_db.py           # popula o banco com disciplinas, pré-requisitos e periodo_oferta
 │   └── seed/
 │       ├── disciplinas.csv      # grade curricular CC 2022 (commitar)
@@ -287,8 +287,13 @@ Cada endpoint tem pelo menos um schema de entrada e um de saída:
 |---|---|---|
 | `GET /grafo` | — | `GrafoResponse` |
 | `POST /aluno/historico` | `HistoricoInput` | `HistoricoResponse` |
+| `POST /aluno/upload-pdf` | `UploadFile` (multipart) | `UploadPdfResponse` |
 | `GET /aluno/{matricula}/disponiveis` | — | `list[DisciplinaDisponivel]` |
 | `GET /aluno/{matricula}/trilha` | — | `TrilhaResponse` |
+
+**`NoDisciplina`** (nó do `GET /grafo`) possui o campo opcional `status`, preenchido apenas quando a rota recebe `?matricula=`. Os valores possíveis são `"cumprida"`, `"disponivel"` ou `"bloqueada"`, permitindo que o frontend colore os nós de acordo com o progresso do aluno.
+
+**`UploadPdfResponse`** é retornado pelo `POST /aluno/upload-pdf` e contém `matricula`, `nome` e `disciplinas_importadas` — o suficiente para o frontend identificar o aluno sem precisar de uma rota separada de consulta.
 
 Os schemas de trilha merecem atenção especial:
 
@@ -311,13 +316,25 @@ Cria a instância do FastAPI, configura o **CORS** e registra os routers.
 
 Busca todas as disciplinas e todos os pré-requisitos do banco e retorna no formato `{ "nos": [...], "arestas": [...] }`, que o Cytoscape.js usa diretamente para renderizar o grafo no frontend.
 
+Aceita o parâmetro opcional `?matricula=`. Quando informado, cada nó recebe o campo `status`:
+
+| status | condição |
+|---|---|
+| `"cumprida"` | Disciplina consta no histórico aprovado do aluno |
+| `"disponivel"` | Todos os pré-requisitos foram cumpridos, disciplina ainda não aprovada |
+| `"bloqueada"` | Algum pré-requisito ainda pendente |
+
+Sem o parâmetro, `status` retorna `null` e o comportamento é idêntico ao original.
+
 ---
 
 ### `app/routers/alunos.py` — Rotas de aluno
 
 Contém três endpoints:
 
-**`POST /aluno/historico`**: recebe os dados do PDF de histórico (após processamento pelo `parse_historico.py`) e salva no banco. Cria o aluno e o histórico se não existirem, ou atualiza se já existirem. Disciplinas com códigos que não existem na grade são ignoradas silenciosamente.
+**`POST /aluno/upload-pdf`**: recebe o PDF do histórico parcial do SIE/UFES diretamente via `multipart/form-data`. Usa `pdfplumber` para extrair o texto do PDF e dois helpers internos (`_parse_aluno_pdf`, `_parse_historico_pdf`) para identificar a matrícula, nome e as disciplinas aprovadas (situação `AP`). Em seguida, chama internamente a mesma lógica do `POST /aluno/historico` para salvar os dados. Retorna `{ matricula, nome, disciplinas_importadas }`. Erros de leitura retornam 400; PDF sem matrícula retorna 422.
+
+**`POST /aluno/historico`**: recebe os dados do aluno e disciplinas aprovadas em JSON e salva no banco. Cria o aluno e o histórico se não existirem, ou atualiza se já existirem. Disciplinas com códigos que não existem na grade são ignoradas silenciosamente.
 
 **`GET /aluno/{matricula}/disponiveis`**: para cada disciplina da grade ainda não aprovada, verifica se todos os pré-requisitos estão no histórico do aluno. As disponíveis são ordenadas por período sugerido.
 
@@ -343,17 +360,19 @@ As funções auxiliares `_proximo_semestre`, `_tipo_semestre`, `_compativel` e `
 
 ### `scripts/parse_historico.py` — Parser do PDF de histórico
 
-Recebe o PDF do histórico parcial do SIGAA e extrai dois tipos de dado:
+Recebe o PDF do histórico parcial do SIE/UFES e extrai dois tipos de dado:
 - Dados cadastrais do aluno (matrícula, nome, CR)
 - Disciplinas com situação AP (Aprovado), com média e semestre
 
 Gera dois CSVs: `aluno_<matricula>.csv` e `historico_<matricula>.csv`. Esses arquivos são pessoais e **não devem ser commitados** (já estão no `.gitignore`).
 
+> A lógica de parsing deste script foi reaproveitada dentro do endpoint `POST /aluno/upload-pdf` (em `app/routers/alunos.py`), que faz o mesmo trabalho diretamente via API sem precisar gerar os CSVs intermediários.
+
 ---
 
 ### `scripts/parse_curriculo.py` — Parser do PDF de currículo
 
-Recebe o PDF do currículo do curso do SIGAA e extrai:
+Recebe o PDF do currículo do curso do SIE/UFES e extrai:
 - Todas as disciplinas com código, nome, créditos, tipo e período sugerido
 - Todos os pré-requisitos entre disciplinas (com bloco)
 
@@ -412,6 +431,10 @@ O padrão seguido em todos os testes é o **AAA**:
 1. **Arrange** (preparar): insere os dados necessários no banco de teste
 2. **Act** (agir): chama o endpoint via `client.get()` ou `client.post()`
 3. **Assert** (verificar): checa o status HTTP e o conteúdo da resposta
+
+**`test_alunos.py`** cobre: `POST /aluno/historico` (3 casos), `POST /aluno/upload-pdf` (3 casos: PDF válido, sem matrícula e arquivo inválido), `GET /aluno/{matricula}/disponiveis` (4 casos) e `GET /aluno/{matricula}/trilha` (4 casos). Os testes de upload-pdf usam `unittest.mock.patch` para simular o `pdfplumber.open` sem precisar de um arquivo PDF real.
+
+**`test_disciplinas.py`** cobre: `GET /grafo` sem matrícula (status nulo) e com matrícula (4 casos: cumprida, disponivel, bloqueada e ausência de status sem matricula).
 
 ---
 
