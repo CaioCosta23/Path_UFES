@@ -7,7 +7,7 @@ export default function Grafo() {
             <div className = {styles.header}>
                 <h1 className = {styles.title}>Visualizador de Grafo</h1>
                 <p className = {styles.subtitle}>
-                    Carregie um PDF ou arquivo ".json" para visualizar a grade curricular.
+                    Carregue um PDF ou arquivo ".json" para visualizar a grade curricular.
                 </p>
             </div>
             <GrafoViewer/>

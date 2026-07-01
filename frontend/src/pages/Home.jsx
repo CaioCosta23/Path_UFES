@@ -16,7 +16,7 @@ export default function Home() {
                 </p>
 
                 <Link to = "/grafo" className = {styles.button}>
-                    Visualizar Grafo ----
+                    Visualizar Grafo
                 </Link>
             </div>
 
@@ -30,7 +30,7 @@ export default function Home() {
                 <div className = {styles.featureCard}>
                     <Link2 className = {styles.featureIcon}/>
                     <h3>Pré-Requisitos</h3>
-                    <p>Visualize as conexões entre as matérias e ennteda a ordem ideal de seu currículo.</p>
+                    <p>Visualize as conexões entre as matérias e entenda a ordem ideal de seu currículo.</p>
                 </div>
 
                 <div className = {styles.featureCard}>

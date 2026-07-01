@@ -5,5 +5,5 @@ export function fetchGrafo() {
 }
 
 export function uploadPdf(file) {
-    return api.postFile("aluno/upload-pdf", file);
+    return api.postFile("/aluno/upload-pdf", file);
 }

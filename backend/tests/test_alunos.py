@@ -1,10 +1,13 @@
 """
-Testes dos endpoints POST /aluno/historico, GET /aluno/{matricula}/disponiveis
-e GET /aluno/{matricula}/trilha.
+Testes dos endpoints POST /aluno/historico, POST /aluno/upload-pdf,
+GET /aluno/{matricula}/disponiveis e GET /aluno/{matricula}/trilha.
 
-Verifica o cadastro de histórico, a lógica de disciplinas disponíveis e o
-algoritmo de trilha acadêmica (caminho crítico em calendário com PAR/ÍMPAR).
+Verifica o cadastro de histórico (JSON e PDF), a lógica de disciplinas
+disponíveis e o algoritmo de trilha acadêmica (caminho crítico em calendário
+com PAR/ÍMPAR).
 """
+from unittest.mock import MagicMock, patch
+
 from sqlalchemy import insert
 
 from app.models import Disciplina, TipoDisciplina, Departamento, PeriodoOferta
@@ -98,6 +101,88 @@ def _inserir_disciplina_com_oferta(
     if periodo_oferta is not None:
         values["periodo_oferta"] = periodo_oferta
     db.execute(insert(Disciplina).values(values))
+
+
+# ---------------------------------------------------------------------------
+# Helpers para mock de PDF
+# ---------------------------------------------------------------------------
+
+_PDF_VALIDO = """
+Matrícula: 2023999999
+Nome civil: Aluno Teste
+Curso: 51 - Ciência da Computação Versão: 2020
+Ano/Semestre de ingresso: 2023/1
+Coeficiente de Rendimento Acumulado: 8,00
+
+2023/1
+INF00001 Programacao I 4 60 8.50 AP
+"""
+
+_PDF_SEM_MATRICULA = """
+Nome civil: Aluno Sem Matricula
+Curso: 51 - Ciência da Computação Versão: 2020
+Ano/Semestre de ingresso: 2023/1
+"""
+
+
+def _mock_pdf(texto: str):
+    """
+    Cria um mock de contexto ``pdfplumber.open`` com uma única página.
+
+    :param texto: Texto que a página simulada deve retornar.
+    :type texto: str
+    :return: Mock configurado como context manager retornando o PDF simulado.
+    :rtype: MagicMock
+    """
+    pagina = MagicMock()
+    pagina.extract_text.return_value = texto
+    pdf = MagicMock()
+    pdf.pages = [pagina]
+    pdf.__enter__ = MagicMock(return_value=pdf)
+    pdf.__exit__ = MagicMock(return_value=False)
+    return pdf
+
+
+# ---------------------------------------------------------------------------
+# POST /aluno/upload-pdf
+# ---------------------------------------------------------------------------
+
+def test_upload_pdf_valido(client, db_session):
+    """PDF bem formado deve importar o aluno e retornar 201 com a contagem."""
+    _inserir_disciplina(db_session, "INF00001", "Programacao I")
+    db_session.commit()
+
+    with patch("app.routers.alunos.pdfplumber.open", return_value=_mock_pdf(_PDF_VALIDO)):
+        resp = client.post(
+            "/aluno/upload-pdf",
+            files={"file": ("historico.pdf", b"%PDF fake", "application/pdf")},
+        )
+
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["matricula"] == MATRICULA
+    assert data["nome"] == "Aluno Teste"
+    assert data["disciplinas_importadas"] == 1
+
+
+def test_upload_pdf_sem_matricula(client, db_session):
+    """PDF sem campo Matrícula deve retornar 422."""
+    with patch("app.routers.alunos.pdfplumber.open", return_value=_mock_pdf(_PDF_SEM_MATRICULA)):
+        resp = client.post(
+            "/aluno/upload-pdf",
+            files={"file": ("historico.pdf", b"%PDF fake", "application/pdf")},
+        )
+
+    assert resp.status_code == 422
+
+
+def test_upload_pdf_arquivo_invalido(client, db_session):
+    """Bytes que não são PDF devem retornar 400."""
+    resp = client.post(
+        "/aluno/upload-pdf",
+        files={"file": ("nao_e_pdf.pdf", b"isso nao e um pdf", "application/pdf")},
+    )
+    assert resp.status_code == 400
 
 
 # ---------------------------------------------------------------------------

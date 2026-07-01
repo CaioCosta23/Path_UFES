@@ -9,6 +9,7 @@ export default function GrafoViewer() {
         nos,
         arestas,
         elementoSelecionado,
+        alunoImportado,
         loading,
         erro,
         adicionarNo,
@@ -50,10 +51,6 @@ export default function GrafoViewer() {
                 const elementos = JSON.parse(e.target.result);
                 carregarGrafo(elementos);
             }catch {
-                /*
-                console.error("Erro ao carregar arquivo:", err);
-                alert(`Arquivo inválido: ${err.message}`);
-                 */
                 alert("Arquivo invalido. Use um JSON válido.");
             }
         };
@@ -119,7 +116,7 @@ export default function GrafoViewer() {
                     className = {styles.button}
                     onClick = {handleAdicionarNo}
                 >
-                    Adicionar Aresta
+                    Adicionar Nó
                 </button>
             </div>
 
@@ -184,6 +181,13 @@ export default function GrafoViewer() {
                         Erro: {erro}
                     </p>
                 )}
+                {alunoImportado && (
+                    <p style = {{color: "var(--color-success, green)"}}>
+                        Histórico importado: <strong>{alunoImportado.nome}</strong>
+                        {" "}(matrícula: {alunoImportado.matricula}) —{" "}
+                        {alunoImportado.disciplinas_importadas} disciplinas salvas.
+                    </p>
+                )}
                 {elementoSelecionado ? (
                     <p>
                         Selecionado: <strong>{elementoSelecionado.label || elementoSelecionado.id}</strong>
@@ -192,7 +196,7 @@ export default function GrafoViewer() {
                         )}
                     </p>
                 ) : (
-                    <p>Nós: {nos.length} | Arestas: {arestas.length} | Clieque em um elemento para ver detalhes</p>
+                    <p>Nós: {nos.length} | Arestas: {arestas.length} | Clique em um elemento para ver detalhes</p>
                 
                 )}
             </div>
