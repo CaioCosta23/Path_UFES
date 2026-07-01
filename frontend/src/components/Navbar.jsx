@@ -39,7 +39,7 @@ export default function Navbar() {
             {/* toggle de tema */}
             <button
                 className = {styles.themeToggle}
-                onClck = {toggleTheme}
+                onClick = {toggleTheme}
                 aria-label = "Alternar tema"
             >
                 {theme === "light" ? "moon" : "sun"}
@@ -47,7 +47,7 @@ export default function Navbar() {
 
             {/* Menu mobile */}
             {isOpen && (
-                <ul className = { styles.modules.mobileMenu}>
+                <ul className = { styles.mobileMenu}>
                     {links.map(({to, label}) => (
                         <li key = {to}>
                             <NavLink
