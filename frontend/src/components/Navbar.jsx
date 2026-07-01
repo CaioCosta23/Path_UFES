@@ -3,6 +3,8 @@ import {Link, NavLink} from "react-router-dom";
 import {useTheme} from "../hooks/useTheme";
 import styles from "../styles/Navbar.module.css";
 
+import {Moon, Sun} from "lucide-react";
+
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const {theme, toggleTheme} = useTheme();
@@ -39,15 +41,15 @@ export default function Navbar() {
             {/* toggle de tema */}
             <button
                 className = {styles.themeToggle}
-                onClck = {toggleTheme}
+                onClick = {toggleTheme}
                 aria-label = "Alternar tema"
             >
-                {theme === "light" ? "moon" : "sun"}
+                {theme === "light" ? <Moon size = {18}/>  : <Sun size = {18}/>}
             </button>
 
             {/* Menu mobile */}
             {isOpen && (
-                <ul className = { styles.modules.mobileMenu}>
+                <ul className = { styles.mobileMenu}>
                     {links.map(({to, label}) => (
                         <li key = {to}>
                             <NavLink
