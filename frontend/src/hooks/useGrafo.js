@@ -10,6 +10,7 @@ export function useGrafo() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState(null);
     const [elementoSelecionado, setElementoSelecionado] = useState(null);
+    const [alunoImportado, setAlunoImportado] = useState(null);
 
     useEffect(() => {
         console.log("containerRef:", containerRef.current);
@@ -156,23 +157,11 @@ export function useGrafo() {
     const carregarDePdf = async (file) => {
         setLoading(true);
         setErro(null);
+        setAlunoImportado(null);
 
         try {
             const dados = await uploadPdf(file);
-
-            const nos = dados.materias.map((materia) => ({
-                data: {id: String(materia.id), label: materia.nome},
-            }));
-
-            const arestas = dados.relacionamentos.map((rel) =>({
-                data: {
-                    id: `${rel.origem}-${rel.destino}`,
-                    source: String(rel.origem),
-                    target: String(rel.destino),
-                },
-            }));
-
-            carregarGrafo([...nos, ...arestas]);
+            setAlunoImportado(dados);
         }catch (err) {
             setErro(err.message);
         }finally {
@@ -185,6 +174,7 @@ export function useGrafo() {
         nos,
         arestas,
         elementoSelecionado,
+        alunoImportado,
         adicionarNo,
         adicionarAresta,
         carregarGrafo,

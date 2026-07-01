@@ -7,6 +7,7 @@ FastAPI usa esses modelos para validar requests e serializar responses.
 Schemas por endpoint:
 - ``GET /grafo``                       → NoDisciplina, ArestaPrereq, GrafoResponse
 - ``POST /aluno/historico``            → DisciplinaAprovada, HistoricoInput, HistoricoResponse
+- ``POST /aluno/upload-pdf``           → UploadPdfResponse
 - ``GET /aluno/{matricula}/disponiveis`` → DisciplinaDisponivel
 - ``GET /aluno/{matricula}/trilha``    → DisciplinaTrilha, OptativaPrevista,
                                           SemestreTrilha, TrilhaResponse
@@ -19,7 +20,12 @@ from pydantic import BaseModel
 # ---------------------------------------------------------------------------
 
 class NoDisciplina(BaseModel):
-    """Nó do grafo: representa uma disciplina."""
+    """
+    Nó do grafo: representa uma disciplina.
+
+    O campo ``status`` é preenchido apenas quando ``GET /grafo`` recebe
+    ``?matricula=``: ``"cumprida"``, ``"disponivel"`` ou ``"bloqueada"``.
+    """
     id:               str
     nome:             str
     creditos:         int
@@ -27,6 +33,7 @@ class NoDisciplina(BaseModel):
     tipo_disciplina:  str
     departamento:     str
     periodo_sugerido: int | None
+    status:           str | None = None
 
 
 class ArestaPrereq(BaseModel):
@@ -78,6 +85,17 @@ class HistoricoResponse(BaseModel):
     """Resposta após salvar o histórico do aluno."""
     matricula:           str
     disciplinas_salvas:  int
+
+
+# ---------------------------------------------------------------------------
+# POST /aluno/upload-pdf
+# ---------------------------------------------------------------------------
+
+class UploadPdfResponse(BaseModel):
+    """Resposta após importar o histórico acadêmico a partir de um PDF do SIGAA."""
+    matricula:              str
+    nome:                   str
+    disciplinas_importadas: int
 
 
 # ---------------------------------------------------------------------------
