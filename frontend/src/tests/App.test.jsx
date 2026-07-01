@@ -56,12 +56,12 @@ describe("App", () => {
         expect(screen.getByTestId("about")).toBeInTheDocument();
     });
 
-    it("deve renderizar a página 404 em rota inexistente", () => {
+    it("deve renderizar para a página Home em rota inexistente", () => {
         render(
             <MemoryRouter initialEntries = {["/rota-inexistente"]}>
                 <App/>
             </MemoryRouter>
         );
-        expect(screen.getByTestId("Página não encontrada")).toBeInTheDocument();
+        expect(screen.getByTestId("home")).toBeInTheDocument();
     });
 });
