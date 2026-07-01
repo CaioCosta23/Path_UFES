@@ -1,176 +1,90 @@
-# Alterações realizadas nesta sessão
+# Mudanças — Frontend (sessão 2026-07-01)
 
-## 1. Correção de bugs no frontend (`frontend/src/hooks/useGrafo.js`)
-
-Três bugs foram corrigidos no hook principal do grafo:
-
-### Bug 1 — Typo: `.mao()` → `.map()`
-```js
-// ANTES (linha 141):
-const arestas = relacionamentos.mao((rel) => ({ ... }));
-
-// DEPOIS:
-const arestas = grafo.arestas.map((aresta) => ({ ... }));
-```
-
-### Bug 2 — Estado errado resetado em `carregarDePdf`
-```js
-// ANTES (linha 159):
-setArestas(null);  // resetava as arestas, não o erro
-
-// DEPOIS:
-setErro(null);
-```
-
-### Bug 3 — Endpoints inexistentes no backend
-```js
-// ANTES: chamava duas rotas que não existem no backend
-const materias = await fetchMaterias();        // GET /materias ❌
-const relacionamentos = await fetchRelacionamentos();  // GET /relacionamentos ❌
-
-// DEPOIS: usa a rota real do backend
-const grafo = await fetchGrafo();  // GET /grafo ✅
-```
+Registro das alterações feitas nos arquivos **fora da pasta `backend/`** nesta sessão de desenvolvimento.
 
 ---
 
-## 2. Correção do serviço de API (`frontend/src/services/grafoService.js`)
+## Correções de bugs
 
-Substituídas as funções `fetchMaterias` e `fetchRelacionamentos` (que chamavam rotas inexistentes)
-por `fetchGrafo`, que chama o endpoint correto `GET /grafo`.
+### `frontend/src/styles/variables.css`
+- Corrigido `--color-sucess` → `--color-success` (2 ocorrências, tema claro e escuro)
+- Corrigido `rgba(...)` com 5 argumentos → 4 argumentos (4 ocorrências)
 
-```js
-// ANTES:
-export function fetchMaterias() { return api.get("/materias"); }
-export function fetchRelacionamentos() { return api.get("/relacionamentos"); }
-export function fetchMateria(id) { return api.get(`/materias/${id}`); }
+### `frontend/src/styles/Sidebar.module.css`
+- Corrigido `width: 300` → `width: 300px`
+- Corrigido `background-color: none` → `background: none`
 
-// DEPOIS:
-export function fetchGrafo() { return api.get("/grafo"); }
-```
+### `frontend/src/styles/Home.module.css`
+- Corrigido `baclground-color` → `background-color`
 
----
+### `frontend/src/styles/About.module.css`
+- Corrigido `min-width: 900px` → `max-width: 900px` (container principal)
+- Corrigido `min-width: 700px` → `max-width: 700px` (`.text`)
+- Corrigido `.github:hover` → `.githubLink:hover` (classe CSS inexistente)
 
-## 3. Correção do Dockerfile do backend (`backend/Dockerfile`)
+### `frontend/src/styles/Navbar.module.css`
+- Corrigido `var (--color-primary)` → `var(--color-primary)` (espaço inválido)
 
-O comando de inicialização apontava para um arquivo inexistente no container:
+### `frontend/src/services/api.js`
+- Corrigido `"application.json"` → `"application/json"` no header do método PUT
 
-```dockerfile
-# ANTES:
-CMD ["fastapi", "run", "main.py", "--port", "8000"]
-# ❌ /app/main.py não existe dentro do container
+### `frontend/src/components/GrafoViewer.jsx`
+- Corrigido typo "Clieque" → "Clique"
+- Corrigido rótulo do botão "Adicionar Aresta" → "Adicionar Nó"
+- Removido bloco de código comentado desnecessário
 
-# DEPOIS:
-CMD ["fastapi", "run", "app/main.py", "--port", "8000"]
-# ✅ /app/app/main.py existe (o backend fica em backend/app/main.py)
-```
+### `frontend/src/hooks/useGrafo.js`
+- Removido `console.log("containerRef:", containerRef.current)` de debug
 
----
+### `frontend/src/pages/About.jsx`
+- Corrigido "ferrameta..." → frase descritiva completa
+- Corrigido "informçãoes" → "informações" (2 ocorrências)
+- Corrigido card do Daniel Sbrocco: nome estava no `devAvatar` e "Nome 2" no `devName`
 
-## 4. Upload de histórico via PDF (`frontend/src/services/grafoService.js`)
+### `frontend/src/pages/Home.jsx`
+- Removido "----" do texto do botão "Visualizar Grafo"
+- Corrigido "ennteda" → "entenda"
 
-Adicionada função `uploadPdf` que chama a nova rota do backend para importar
-o histórico acadêmico do aluno a partir de um PDF do SIE/UFES:
-
-```js
-// ANTES: chamava rota inexistente
-export function uploadPdf(file) {
-    return api.postFile("/upload-pdf", file);  // ❌ rota não existia
-
-// DEPOIS: chama a rota correta
-export function uploadPdf(file) {
-    return api.postFile("/aluno/upload-pdf", file);  // ✅
-}
-```
+### `frontend/src/pages/Grafo.jsx`
+- Corrigido "Carregie" → "Carregue"
 
 ---
 
-## 5. Importação de histórico via PDF (`frontend/src/hooks/useGrafo.js`)
+## Novas funcionalidades
 
-A função `carregarDePdf` foi reescrita. Antes tentava montar o grafo a partir
-do PDF (formato incompatível). Agora envia o arquivo ao backend e armazena os
-dados do aluno importado no estado `alunoImportado`:
+### `frontend/src/services/grafoService.js` — modificado
+- `fetchGrafo(matricula = null)` aceita matrícula opcional e passa `?matricula=` ao backend
+- Com matrícula, o backend devolve `status` por nó (cumprida/disponivel/bloqueada)
 
-```js
-// ANTES: tentava renderizar grafo a partir do PDF
-const dados = await uploadPdf(file);
-const nos = dados.materias.map(...);       // ❌ campo inexistente
-const arestas = dados.relacionamentos.map(...); // ❌ campo inexistente
+### `frontend/src/hooks/useGrafo.js` — reescrito
+- Novo estado `matricula` (inicializado do `localStorage`)
+- Após upload do PDF, o grafo recarrega automaticamente com a matrícula, sem clicar em "Carregar matérias"
+- Matrícula salva no `localStorage` (chave `pathufes_matricula`) para reutilização na página de Trilha
+- Estilos Cytoscape adicionados por status:
+  - `node[status='cumprida']` → verde (`#10b981`)
+  - `node[status='disponivel']` → azul/índigo (`#4f46e5`)
+  - `node[status='bloqueada']` → cinza (`#94a3b8`)
 
-// DEPOIS: salva o aluno retornado pelo backend
-const dados = await uploadPdf(file);
-setAlunoImportado(dados);
-// dados = { matricula, nome, disciplinas_importadas }
-```
+### `frontend/src/services/trilhaService.js` — NOVO
+- `fetchTrilha(matricula, semestre, maxDisc, diasBloqueados)` chama `GET /aluno/{matricula}/trilha`
+- `diasBloqueados` passados como múltiplos query params
 
-Também adicionado o estado `alunoImportado` ao retorno do hook para que
-componentes possam exibir o resultado da importação.
+### `frontend/src/hooks/useTrilha.js` — NOVO
+- Hook `useTrilha()` expõe `{ trilha, loading, erro, gerarTrilha }`
 
----
+### `frontend/src/pages/Trilha.jsx` — NOVO
+Página principal de planejamento acadêmico com:
+- **Formulário de preferências**: matrícula, semestre de início, slider de max disciplinas, checkboxes de dias bloqueados
+- **Visualização em tabela por semestre**: card por semestre com cabeçalho (semestre + tipo + créditos), tabela de disciplinas e seção de optativas disponíveis
 
-## 6. Exibição do resultado de importação (`frontend/src/components/GrafoViewer.jsx`)
+### `frontend/src/styles/Trilha.module.css` — NOVO
+Estilos da página: formulário em grid 2 colunas, cards de semestre, tabela, badges OB/OP.
 
-Após o upload do PDF, o painel de informações exibe o nome e matrícula do
-aluno importado, e a quantidade de disciplinas salvas:
+### `frontend/src/App.jsx` — modificado
+- Adicionada rota `/trilha` → `<Trilha />`
 
-```
-Histórico importado: MIGUEL ZON MURAD (matrícula: 2023100265) — 24 disciplinas salvas.
-```
+### `frontend/src/components/Navbar.jsx` — modificado
+- Adicionado link "Trilha" entre "Grafo" e "About"
 
-Isso é renderizado pelo campo `alunoImportado` exposto pelo hook `useGrafo`.
-
----
-
-## 7. Novo endpoint: `POST /aluno/upload-pdf` (backend)
-
-Endpoint que recebe o PDF do histórico parcial do SIE/UFES, extrai os dados
-do aluno e suas disciplinas aprovadas usando `pdfplumber`, e salva tudo no
-banco de dados.
-
-**Arquivos alterados:** `backend/app/routers/alunos.py`, `backend/app/schemas.py`
-
-**Resposta:**
-```json
-{
-  "matricula": "2023100265",
-  "nome": "MIGUEL ZON MURAD",
-  "disciplinas_importadas": 24
-}
-```
-
----
-
-## 8. Grafo personalizado: `GET /grafo?matricula=` (backend)
-
-O endpoint `GET /grafo` passou a aceitar o parâmetro opcional `?matricula=`.
-Quando informado, cada nó retorna o campo `status` indicando a situação da
-disciplina para aquele aluno:
-
-| status | significado |
-|---|---|
-| `"cumprida"` | Disciplina já aprovada no histórico |
-| `"disponivel"` | Todos os pré-requisitos cumpridos |
-| `"bloqueada"` | Algum pré-requisito ainda pendente |
-
-Sem `?matricula=`, o campo `status` retorna `null` e o comportamento é
-idêntico ao anterior.
-
-**Arquivos alterados:** `backend/app/routers/disciplinas.py`, `backend/app/schemas.py`
-
----
-
-## Como rodar o projeto
-
-```bash
-cd Path_UFES
-docker compose up --build
-```
-
-Após subir os containers, popular o banco:
-```bash
-docker compose exec backend python scripts/seed_db.py
-```
-
-- Frontend: http://localhost:5173
-- Backend (API): http://localhost:8000
-- Documentação da API: http://localhost:8000/docs
+### `frontend/src/components/GrafoViewer.jsx` — modificado
+- Adicionada legenda de cores: verde = Cursada, azul = Disponível, cinza = Bloqueada

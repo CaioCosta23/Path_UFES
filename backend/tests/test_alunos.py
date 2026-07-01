@@ -10,8 +10,9 @@ from unittest.mock import MagicMock, patch
 
 from sqlalchemy import insert
 
-from app.models import Disciplina, TipoDisciplina, Departamento, PeriodoOferta
+from app.models import Disciplina, TipoDisciplina, Departamento, PeriodoOferta, DiaSemana, Horario
 from app.models import prerequisitos as prereq_table
+from app.models import Aula, AulaDia, AulaHorario
 
 MATRICULA = "2023999999"
 
@@ -47,6 +48,25 @@ def _inserir_disciplina(db, codigo: str, nome: str, periodo: int = 1):
         "departamento":     Departamento.DI,
         "periodo_sugerido": periodo,
     }))
+
+
+def _inserir_aula(db, codigo_disciplina: str, dia: DiaSemana, horario: Horario) -> None:
+    """
+    Insere uma Aula com um dia e horário específicos no banco de teste.
+
+    :param db: Sessão do banco de teste.
+    :param codigo_disciplina: Código da disciplina dona da aula.
+    :type codigo_disciplina: str
+    :param dia: Dia da semana em que a aula ocorre.
+    :type dia: DiaSemana
+    :param horario: Faixa de horário da aula.
+    :type horario: Horario
+    """
+    aula = Aula(codigo_disciplina=codigo_disciplina)
+    db.add(aula)
+    db.flush()
+    db.add(AulaDia(aula_id=aula.id, dia_semana=dia))
+    db.add(AulaHorario(aula_id=aula.id, horario=horario))
 
 
 def _inserir_prereq(db, disciplina: str, prereq: str):
@@ -366,3 +386,60 @@ def test_trilha_gera_placeholder_optativa(client, db_session):
     # placeholder não tem código
     placeholder = next(d for d in disciplinas if d["nome"] == "Optativa01")
     assert placeholder["codigo"] is None
+
+
+# ---------------------------------------------------------------------------
+# GET /aluno/{matricula}/trilha — filtro de dias_bloqueados
+# ---------------------------------------------------------------------------
+
+def test_trilha_exclui_disciplina_com_conflito_de_dia(client, db_session):
+    """
+    Disciplina com aula na SEGUNDA deve ser excluída quando SEGUNDA está bloqueada.
+    Disciplina sem conflito deve permanecer na trilha.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc Segunda")
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Disc Quarta")
+    db_session.commit()
+
+    _inserir_aula(db_session, "INF00001", DiaSemana.SEGUNDA, Horario.H08_09)
+    _inserir_aula(db_session, "INF00002", DiaSemana.QUARTA,  Horario.H08_09)
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1"
+        "&dias_bloqueados=SEGUNDA"
+    )
+    assert resp.status_code == 200
+    todos_codigos = [
+        d["codigo"]
+        for sem in resp.json()["semestres"]
+        for d in sem["disciplinas"]
+    ]
+    assert "INF00002" in todos_codigos   # quarta: sem conflito
+    assert "INF00001" not in todos_codigos  # segunda: bloqueada
+
+
+def test_trilha_sem_aulas_sempre_disponivel(client, db_session):
+    """
+    Disciplina sem aulas cadastradas deve aparecer na trilha mesmo com dias bloqueados.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Sem Aulas")
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    # Bloqueia todos os dias da semana
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1"
+        "&dias_bloqueados=SEGUNDA&dias_bloqueados=TERCA"
+        "&dias_bloqueados=QUARTA&dias_bloqueados=QUINTA&dias_bloqueados=SEXTA"
+    )
+    assert resp.status_code == 200
+    todos_codigos = [
+        d["codigo"]
+        for sem in resp.json()["semestres"]
+        for d in sem["disciplinas"]
+    ]
+    assert "INF00001" in todos_codigos  # sem aulas → nunca filtrada

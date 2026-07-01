@@ -3,4 +3,3 @@ backend/scripts/seed/aluno_*.csv
 backend/scripts/seed/historico_*.csv
 **/__pycache__/
 *.pyc
-CHANGES.md

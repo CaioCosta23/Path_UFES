@@ -6,11 +6,14 @@ export function useGrafo() {
     const cyRef = useRef(null);
     const containerRef = useRef(null);
     const [nos, setNos] = useState([]);
-    const[arestas, setArestas] = useState([]);
+    const [arestas, setArestas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState(null);
     const [elementoSelecionado, setElementoSelecionado] = useState(null);
     const [alunoImportado, setAlunoImportado] = useState(null);
+    const [matricula, setMatricula] = useState(
+        () => localStorage.getItem("pathufes_matricula") || null
+    );
 
     useEffect(() => {
         if (!containerRef.current)
@@ -23,27 +26,45 @@ export function useGrafo() {
                 {
                     selector: "node",
                     style: {
-                        "background-color": "#4f46e5",
-                        "border-color": "#4338ca",
+                        "background-color": "#94a3b8",
+                        "border-color": "#64748b",
                         "border-width": 2,
                         label: "data(label)",
                         color: "#1a202c",
-                        "font-size": "14px",
-                        "text-valign":"center",
+                        "font-size": "11px",
+                        "text-valign": "center",
                         "text-halign": "center",
+                        "text-wrap": "wrap",
+                        "text-max-width": "80px",
+                    },
+                },
+                // Verde: disciplina já cursada
+                {
+                    selector: "node[status='cumprida']",
+                    style: {
+                        "background-color": "#10b981",
+                        "border-color": "#059669",
+                    },
+                },
+                // Azul: disponível para cursar agora
+                {
+                    selector: "node[status='disponivel']",
+                    style: {
+                        "background-color": "#4f46e5",
+                        "border-color": "#4338ca",
+                    },
+                },
+                // Cinza: bloqueada por pré-requisito pendente
+                {
+                    selector: "node[status='bloqueada']",
+                    style: {
+                        "background-color": "#94a3b8",
+                        "border-color": "#64748b",
                     },
                 },
                 {
                     selector: "node:selected",
-                    style: {
-                        "background-color": "#4338ca",
-                    },
-                },
-                {
-                    selector: "node:active",
-                    style: {
-                        "background-color": "#4338ca",
-                    },
+                    style: {"background-color": "#4338ca"},
                 },
                 {
                     selector: "edge",
@@ -59,14 +80,14 @@ export function useGrafo() {
                     selector: "edge:selected",
                     style: {
                         "line-color": "#10b981",
-                        "target-arrow-color": "#10b981"
+                        "target-arrow-color": "#10b981",
                     },
                 },
             ],
             layout: {name: "cose"},
         });
 
-        cyRef.current.on("select", "node", "edge", (event) => {
+        cyRef.current.on("select", "node, edge", (event) => {
             setElementoSelecionado(event.target.data());
         });
 
@@ -77,13 +98,22 @@ export function useGrafo() {
         return () => cyRef.current?.destroy();
     }, []);
 
+    // Converte a resposta do backend para o formato do Cytoscape,
+    // incluindo o campo status para coloração automática dos nós.
+    const _formatarElementos = (grafo) => {
+        const nosData = grafo.nos.map((no) => ({
+            data: {id: no.id, label: no.nome, status: no.status},
+        }));
+        const arestasData = grafo.arestas.map((a) => ({
+            data: {id: `${a.source}-${a.target}`, source: a.source, target: a.target},
+        }));
+        return [...nosData, ...arestasData];
+    };
+
     const adicionarNo = (id, label) => {
-        if (!id || !label) 
+        if (!id || !label)
             return;
-        cyRef.current?.add({
-            group: "nodes",
-            data: {id, label},
-        });
+        cyRef.current?.add({group: "nodes", data: {id, label}});
         setNos((prev) => [...prev, {data: {id, label}}]);
     };
 
@@ -91,15 +121,12 @@ export function useGrafo() {
         if (!source || !target)
             return;
         const id = `${source}-${target}`;
-        cyRef.current?.add({
-            group: "edges",
-            data: {id, source, target},
-        });
-        setArestas((prev) => [...prev, {data: {id, source, target} }]);
+        cyRef.current?.add({group: "edges", data: {id, source, target}});
+        setArestas((prev) => [...prev, {data: {id, source, target}}]);
     };
 
     const carregarGrafo = (elementos) => {
-        if (!elementos) 
+        if (!elementos)
             return;
         cyRef.current.elements().remove();
         cyRef.current.add(elementos);
@@ -109,11 +136,12 @@ export function useGrafo() {
     };
 
     const removerSelecionado = () => {
-        cyRef.current?.$('selected').remove();
+        cyRef.current?.$(':selected').remove();
         setElementoSelecionado(null);
     };
 
     const limparGrafo = () => {
+        cyRef.current?.elements().remove();
         setNos([]);
         setArestas([]);
         setElementoSelecionado(null);
@@ -123,50 +151,40 @@ export function useGrafo() {
         cyRef.current?.layout({name: "cose"}).run();
     };
 
-    const carregarDoBackend = async() => {
+    // Carrega o grafo do backend. Com matrícula, os nós recebem status colorido.
+    const carregarDoBackend = async () => {
         setLoading(true);
         setErro(null);
-
         try {
-            const grafo = await fetchGrafo();
-
-            const nos = grafo.nos.map((no) => ({
-                data: {
-                    id: no.id,
-                    label: no.nome,
-                },
-            }));
-
-            const arestas = grafo.arestas.map((aresta) => ({
-                data: {
-                    id: `${aresta.source}-${aresta.target}`,
-                    source: aresta.source,
-                    target: aresta.target,
-                },
-            }));
-
-            carregarGrafo([...nos, ...arestas]);
-        }catch (err) {
+            const grafo = await fetchGrafo(matricula);
+            carregarGrafo(_formatarElementos(grafo));
+        } catch (err) {
             setErro(err.message);
-        }finally {
+        } finally {
             setLoading(false);
         }
-    }
+    };
 
+    // Importa histórico do PDF e recarrega o grafo já personalizado.
     const carregarDePdf = async (file) => {
         setLoading(true);
         setErro(null);
         setAlunoImportado(null);
-
         try {
             const dados = await uploadPdf(file);
             setAlunoImportado(dados);
-        }catch (err) {
+            setMatricula(dados.matricula);
+            localStorage.setItem("pathufes_matricula", dados.matricula);
+
+            // Recarrega imediatamente com a matrícula recém-obtida
+            const grafo = await fetchGrafo(dados.matricula);
+            carregarGrafo(_formatarElementos(grafo));
+        } catch (err) {
             setErro(err.message);
-        }finally {
+        } finally {
             setLoading(false);
         }
-    }
+    };
 
     return {
         containerRef,
@@ -174,6 +192,7 @@ export function useGrafo() {
         arestas,
         elementoSelecionado,
         alunoImportado,
+        matricula,
         adicionarNo,
         adicionarAresta,
         carregarGrafo,

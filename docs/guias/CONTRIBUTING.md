@@ -230,6 +230,9 @@ O banco segue o diagrama de classes em `docs/assets/diagrams/class/class_diagram
 | `alunos` | Dados cadastrais do estudante |
 | `historicos` | CR e créditos totais do aluno |
 | `historico_disciplinas` | Disciplinas aprovadas pelo aluno (nós visitados no grafo) |
+| `aulas` | Blocos de horário de uma disciplina (referenciados pelo filtro de `dias_bloqueados`) |
+| `aula_dias` | Quais dias da semana uma Aula ocorre (enum `DiaSemana`: SEGUNDA…SEXTA) |
+| `aula_horarios` | Quais faixas de horário uma Aula ocorre (enum `Horario`: H07_08…H18_19) |
 | `alembic_version` | Controle interno do Alembic — não modificar |
 
 O campo `periodo_oferta` na tabela `disciplinas` indica em qual tipo de semestre a disciplina costuma ser ofertada (`PAR`, `IMPAR` ou `AMBOS`). Esse dado foi gerado analisando 7 semestres de PDFs de ofertas dos departamentos DI, DMAT e DEE (2023/1 a 2026/1) e é usado pelo algoritmo de trilha para evitar agendar disciplinas em semestres em que não são oferecidas.
@@ -267,11 +270,13 @@ Define as tabelas do banco como classes Python. O SQLAlchemy traduz essas classe
 
 Arquivos de models têm três tipos de objetos:
 
-- **Enums** (`TipoDisciplina`, `Departamento`, `PeriodoOferta`): valores fixos que uma coluna pode ter
+- **Enums** (`TipoDisciplina`, `Departamento`, `PeriodoOferta`, `DiaSemana`, `Horario`): valores fixos que uma coluna pode ter
 - **Tabelas associativas** (`prerequisitos`, `historico_disciplinas`, `curriculo_disciplinas`): implementam relacionamentos muitos-para-muitos com colunas extras
-- **Classes mapeadas** (`Disciplina`, `Aluno`, `Historico`, `Curriculo`): as entidades principais
+- **Classes mapeadas** (`Disciplina`, `Aluno`, `Historico`, `Curriculo`, `Aula`, `AulaDia`, `AulaHorario`): as entidades principais
 
 A tabela `prerequisitos` é a mais importante: ela representa as **arestas do grafo**. Cada linha diz "a disciplina X exige a disciplina Y como pré-requisito". O campo `bloco` indica se é obrigatório (1) ou co-requisito (2).
+
+As classes `Aula`, `AulaDia` e `AulaHorario` implementam o modelo do diagrama de classes do projeto. Cada `Aula` pertence a uma `Disciplina` e ocorre em um ou mais `DiaSemana` e `Horario`. Esse modelo é usado pelo filtro `dias_bloqueados` do endpoint `GET /aluno/{matricula}/trilha`: disciplinas com aulas em dias bloqueados pelo aluno são excluídas da trilha. Disciplinas sem aulas cadastradas nunca são filtradas.
 
 ---
 
@@ -338,9 +343,10 @@ Contém três endpoints:
 
 **`GET /aluno/{matricula}/disponiveis`**: para cada disciplina da grade ainda não aprovada, verifica se todos os pré-requisitos estão no histórico do aluno. As disponíveis são ordenadas por período sugerido.
 
-**`GET /aluno/{matricula}/trilha`**: gera a trilha acadêmica otimizada para o aluno concluir o curso no menor número de semestres. Recebe dois parâmetros via query string:
+**`GET /aluno/{matricula}/trilha`**: gera a trilha acadêmica otimizada para o aluno concluir o curso no menor número de semestres. Recebe os seguintes parâmetros via query string:
 - `semestre_inicio` (obrigatório): semestre a partir do qual planejar, ex: `"2026/2"`
 - `max_disciplinas` (opcional, padrão 5): quantas disciplinas por semestre (1–10)
+- `dias_bloqueados` (opcional, lista, padrão vazio): dias da semana em que o aluno não pode ter aula (valores: `SEGUNDA`, `TERCA`, `QUARTA`, `QUINTA`, `SEXTA`). Disciplinas com aulas nesses dias são excluídas da trilha. Pode ser passado múltiplas vezes: `?dias_bloqueados=SEGUNDA&dias_bloqueados=SEXTA`
 
 O algoritmo usa o **método do caminho crítico em calendário**:
 
@@ -354,7 +360,7 @@ O algoritmo usa o **método do caminho crítico em calendário**:
 
 > **Por que não basta ordenar por `periodo_sugerido`?** Porque uma disciplina com poucos sucessores pode ter `periodo_sugerido` menor que outra cujos sucessores têm restrições PAR/ÍMPAR que forçariam esperas extras de semestre. O caminho crítico em calendário considera esse custo real.
 
-As funções auxiliares `_proximo_semestre`, `_tipo_semestre`, `_compativel` e `_profundidade_calendario` ficam no mesmo arquivo, fora do router, por serem lógica pura sem efeitos colaterais.
+As funções auxiliares `_proximo_semestre`, `_tipo_semestre`, `_compativel`, `_profundidade_calendario` e `_tem_conflito_dia` ficam no mesmo arquivo, fora do router, por serem lógica pura sem efeitos colaterais. A função `_tem_conflito_dia(disc, dias_bloqueados)` verifica se alguma `Aula` da disciplina ocorre em um dia bloqueado pelo aluno.
 
 ---
 
@@ -432,9 +438,77 @@ O padrão seguido em todos os testes é o **AAA**:
 2. **Act** (agir): chama o endpoint via `client.get()` ou `client.post()`
 3. **Assert** (verificar): checa o status HTTP e o conteúdo da resposta
 
-**`test_alunos.py`** cobre: `POST /aluno/historico` (3 casos), `POST /aluno/upload-pdf` (3 casos: PDF válido, sem matrícula e arquivo inválido), `GET /aluno/{matricula}/disponiveis` (4 casos) e `GET /aluno/{matricula}/trilha` (4 casos). Os testes de upload-pdf usam `unittest.mock.patch` para simular o `pdfplumber.open` sem precisar de um arquivo PDF real.
+**`test_alunos.py`** cobre: `POST /aluno/historico` (3 casos), `POST /aluno/upload-pdf` (3 casos: PDF válido, sem matrícula e arquivo inválido), `GET /aluno/{matricula}/disponiveis` (4 casos), `GET /aluno/{matricula}/trilha` (4 casos de PAR/ÍMPAR e caminho crítico) e filtro `dias_bloqueados` (2 casos: conflito de dia exclui disciplina; disciplina sem aulas sempre aparece). Os testes de upload-pdf usam `unittest.mock.patch` para simular o `pdfplumber.open` sem precisar de um arquivo PDF real.
 
-**`test_disciplinas.py`** cobre: `GET /grafo` sem matrícula (status nulo) e com matrícula (4 casos: cumprida, disponivel, bloqueada e ausência de status sem matricula).
+**`test_disciplinas.py`** cobre: `GET /grafo` sem matrícula (status nulo) e com matrícula (3 casos: cumprida, disponivel, bloqueada).
+
+Total: **20 testes**, todos passando.
+
+---
+
+---
+
+## Guia de arquivos do frontend
+
+O frontend é uma SPA (Single Page Application) em React + Vite. Os arquivos seguem a estrutura:
+
+```
+frontend/src/
+├── App.jsx              # roteador raiz (BrowserRouter + Routes)
+├── main.jsx             # ponto de entrada do Vite
+├── components/
+│   ├── Navbar.jsx       # barra de navegação com links e toggle de tema
+│   ├── GrafoViewer.jsx  # visualização Cytoscape + controles do grafo
+│   └── Sidebar.jsx      # painel lateral com detalhes do elemento selecionado
+├── hooks/
+│   ├── useGrafo.js      # estado e lógica do grafo (Cytoscape, matrícula, upload)
+│   ├── useTrilha.js     # estado e lógica da trilha acadêmica
+│   └── useTheme.js      # toggle de tema claro/escuro
+├── pages/
+│   ├── Home.jsx         # página inicial com cards de funcionalidades
+│   ├── Grafo.jsx        # página /grafo: envolve GrafoViewer
+│   ├── Trilha.jsx       # página /trilha: formulário + tabela de semestres
+│   └── About.jsx        # página /about: equipe e descrição do projeto
+├── services/
+│   ├── api.js           # wrapper HTTP (get, post, postFile, put, delete)
+│   ├── grafoService.js  # fetchGrafo(matricula?), uploadPdf(file)
+│   └── trilhaService.js # fetchTrilha(matricula, semestre, maxDisc, diasBloqueados)
+└── styles/
+    ├── variables.css    # CSS custom properties (cores, espaçamento, tipografia)
+    ├── global.css       # reset e estilos globais
+    ├── Grafo.module.css
+    ├── GrafoViewer.module.css
+    ├── Home.module.css
+    ├── About.module.css
+    ├── Navbar.module.css
+    ├── Sidebar.module.css
+    └── Trilha.module.css
+```
+
+### Fluxo principal do usuário
+
+1. **Upload do PDF** (`GrafoViewer` → `useGrafo.carregarDePdf`):
+   - Envia o PDF ao backend via `POST /aluno/upload-pdf`
+   - Backend retorna `{ matricula, nome, disciplinas_importadas }`
+   - Matrícula salva no `localStorage` (chave `pathufes_matricula`)
+   - Grafo recarregado automaticamente via `GET /grafo?matricula=` — nós coloridos por status
+
+2. **Visualização do grafo** (`/grafo`):
+   - Verde = disciplina já cursada (`cumprida`)
+   - Azul = disponível para cursar agora (`disponivel`)
+   - Cinza = bloqueada por pré-requisito pendente (`bloqueada`)
+
+3. **Trilha acadêmica** (`/trilha`):
+   - Formulário pré-preenche a matrícula do `localStorage`
+   - Aluno configura: semestre de início, máx. disciplinas, dias bloqueados
+   - Backend calcula a trilha via `GET /aluno/{matricula}/trilha`
+   - Resultado exibido em tabela por semestre, com disciplinas e sugestões de optativas
+
+### Convenção de estilos
+
+- Todos os componentes usam **CSS Modules** (`import styles from "../styles/X.module.css"`)
+- Nomes de classes no arquivo CSS devem coincidir exatamente com os usados no JSX
+- Variáveis CSS globais definidas em `variables.css` — não use valores hardcoded de cor ou espaçamento
 
 ---
 

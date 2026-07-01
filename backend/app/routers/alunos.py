@@ -19,7 +19,7 @@ from sqlalchemy import select, insert
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Aluno, Historico, Disciplina, PeriodoOferta, TipoDisciplina
+from app.models import Aluno, Historico, Disciplina, PeriodoOferta, TipoDisciplina, DiaSemana
 from app.models import historico_disciplinas as hist_disc_table
 from app.schemas import (
     HistoricoInput, HistoricoResponse, UploadPdfResponse, DisciplinaDisponivel,
@@ -304,6 +304,28 @@ def get_disponiveis(matricula: str, db: Session = Depends(get_db)):
 # Funções auxiliares para o algoritmo de trilha
 # ---------------------------------------------------------------------------
 
+def _tem_conflito_dia(disc: Disciplina, dias_bloqueados: list[str]) -> bool:
+    """
+    Verifica se a disciplina tem alguma aula em um dia bloqueado pelo aluno.
+
+    Disciplinas sem aulas cadastradas nunca conflitam (retorna False).
+
+    :param disc: Disciplina a verificar.
+    :type disc: Disciplina
+    :param dias_bloqueados: Dias da semana que o aluno não pode frequentar.
+    :type dias_bloqueados: list[str]
+    :return: True se houver conflito de horário.
+    :rtype: bool
+    """
+    if not dias_bloqueados or not disc.aulas:
+        return False
+    for aula in disc.aulas:
+        for dia in aula.dias:
+            if dia.dia_semana.value in dias_bloqueados:
+                return True
+    return False
+
+
 def _proximo_semestre(semestre: str) -> str:
     """
     Retorna o semestre imediatamente seguinte.
@@ -434,6 +456,10 @@ def get_trilha(
         description='Semestre a partir do qual gerar a trilha, ex: "2026/2"',
     ),
     max_disciplinas: int = Query(5, ge=1, le=10),
+    dias_bloqueados: list[str] = Query(
+        default=[],
+        description="Dias da semana que o aluno não pode ter aula (ex: SEGUNDA, SEXTA).",
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -460,6 +486,10 @@ def get_trilha(
     :type semestre_inicio: str
     :param max_disciplinas: Número máximo de disciplinas por semestre (1–10).
     :type max_disciplinas: int
+    :param dias_bloqueados: Dias da semana que o aluno não pode frequentar.
+        Disciplinas com aulas nesses dias são excluídas da trilha.
+        Disciplinas sem aulas cadastradas nunca são excluídas.
+    :type dias_bloqueados: list[str]
     :param db: Sessão do banco de dados injetada pelo FastAPI.
     :type db: Session
     :return: Trilha semestre a semestre com disciplinas e optativas previstas.
@@ -521,11 +551,12 @@ def get_trilha(
                 requer_map[prereq.codigo].add(d.codigo)
         memo: dict = {}
 
-        # Disciplinas prontas: pré-requisitos todos cumpridos E período compatível
+        # Disciplinas prontas: pré-req cumpridos, período compatível, sem conflito de dia
         prontas = [
             d for d in pendentes
             if all(p.codigo in cumpridas for p in d.pre_requisitos)
             and _compativel(d.periodo_oferta, tipo)
+            and not _tem_conflito_dia(d, dias_bloqueados)
         ]
 
         # Ordena pelo caminho crítico em calendário (descendente).
