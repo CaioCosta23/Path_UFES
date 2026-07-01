@@ -119,7 +119,7 @@ export default function GrafoViewer() {
                     className = {styles.button}
                     onClick = {handleAdicionarNo}
                 >
-                    Adicionar Aresta
+                    Adicionar Nó
                 </button>
             </div>
 
