@@ -47,6 +47,15 @@ export default function Navbar() {
                 {theme === "light" ? <Moon size = {18}/>  : <Sun size = {18}/>}
             </button>
 
+            {/* Botão hambúrguer (mobile) */}
+            <button
+                className = {styles.hamburguer}
+                onClick = {() => setIsOpen(!isOpen)}
+                aria-label = "Abrir menu"
+            >
+                {isOpen ? "✕" : "☰"}
+            </button>
+
             {/* Menu mobile */}
             {isOpen && (
                 <ul className = { styles.mobileMenu}>

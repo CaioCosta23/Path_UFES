@@ -9,9 +9,12 @@ a cada semestre, entre as disciplinas disponíveis, são priorizadas aquelas
 cuja cadeia de dependências exige mais semestres para ser concluída,
 levando em conta esperas causadas por restrições de PAR/ÍMPAR.
 """
+import io
+import re
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import pdfplumber
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy import select, insert
 from sqlalchemy.orm import Session
 
@@ -19,11 +22,160 @@ from app.database import get_db
 from app.models import Aluno, Historico, Disciplina, PeriodoOferta, TipoDisciplina
 from app.models import historico_disciplinas as hist_disc_table
 from app.schemas import (
-    HistoricoInput, HistoricoResponse, DisciplinaDisponivel,
+    HistoricoInput, HistoricoResponse, UploadPdfResponse, DisciplinaDisponivel,
     DisciplinaTrilha, OptativaPrevista, SemestreTrilha, TrilhaResponse,
 )
 
 router = APIRouter(prefix="/aluno", tags=["aluno"])
+
+
+# ---------------------------------------------------------------------------
+# Helpers de parsing do PDF do SIE/UFES
+# ---------------------------------------------------------------------------
+
+def _parse_aluno_pdf(texto: str) -> dict:
+    """
+    Extrai os dados cadastrais do aluno do cabeçalho do histórico SIE.
+
+    :param texto: Texto completo extraído do PDF.
+    :type texto: str
+    :return: Dicionário com matricula, nome, curso, ano_ingresso,
+             semestre_ingresso e cr.
+    :rtype: dict
+    """
+    def _buscar(pattern: str, default: str = "") -> str:
+        """
+        Aplica regex no texto e retorna o primeiro grupo capturado.
+
+        :param pattern: Expressão regular com um grupo de captura.
+        :type pattern: str
+        :param default: Valor retornado quando não há correspondência.
+        :type default: str
+        :return: Grupo capturado ou default.
+        :rtype: str
+        """
+        m = re.search(pattern, texto)
+        return m.group(1).strip() if m else default
+
+    cr_raw = _buscar(r"Coeficiente de Rendimento Acumulado:\s+([\d.,]+)")
+    return {
+        "matricula":         _buscar(r"Matr[íi]cula:\s+(\d+)"),
+        "nome":              _buscar(r"Nome civil:\s+([^\n]+)"),
+        "curso":             _buscar(r"Curso:\s+\d+\s+-\s+(.+?)\s+Vers[ãa]o:"),
+        "ano_ingresso":      _buscar(r"Ano/Semestre de ingresso:\s+(\d{4})/"),
+        "semestre_ingresso": _buscar(r"Ano/Semestre de ingresso:\s+\d{4}/(\d+)"),
+        "cr":                cr_raw.replace(",", "."),
+    }
+
+
+def _parse_historico_pdf(texto: str) -> list[dict]:
+    """
+    Extrai as disciplinas aprovadas (situação AP) do histórico SIE.
+
+    :param texto: Texto completo extraído do PDF.
+    :type texto: str
+    :return: Lista de dicionários com codigo, media, ano e semestre.
+    :rtype: list[dict]
+    """
+    aprovadas: list[dict] = []
+
+    sem_posicoes = [
+        (m.start(), m.group(1), m.group(2))
+        for m in re.finditer(r"(\d{4})/([12])", texto)
+    ]
+
+    for code_m in re.finditer(r"[A-Z]{3}\d{5}\b", texto):
+        codigo = code_m.group(0)
+        pos    = code_m.start()
+        trecho = texto[pos: pos + 250]
+
+        sit_m = re.search(
+            r"\b(AP|RF|RN|IF|IN|MT|CA|DI|AD|AE|AL|ASC|CAN|TR)\b", trecho
+        )
+        if not sit_m or sit_m.group(1) != "AP":
+            continue
+
+        semestre_atual = None
+        for s_pos, ano, semestre in sem_posicoes:
+            if s_pos < pos:
+                semestre_atual = (ano, semestre)
+        if not semestre_atual:
+            continue
+
+        media_m = re.search(r"([\d]+[,.][\d]+)\s+AP\b", trecho)
+        media   = media_m.group(1).replace(",", ".") if media_m else None
+
+        aprovadas.append({
+            "codigo":   codigo,
+            "media":    media,
+            "ano":      semestre_atual[0],
+            "semestre": semestre_atual[1],
+        })
+
+    return aprovadas
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+@router.post("/upload-pdf", response_model=UploadPdfResponse, status_code=201)
+def upload_historico_pdf(
+    file: UploadFile = File(...),
+    db:   Session    = Depends(get_db),
+):
+    """
+    Importa o histórico acadêmico de um aluno a partir do PDF do SIE/UFES.
+
+    Extrai os dados cadastrais e as disciplinas aprovadas do PDF, cria ou
+    atualiza o registro do aluno e seu histórico no banco de dados.
+
+    :param file: Arquivo PDF do histórico parcial exportado pelo SIE.
+    :type file: UploadFile
+    :param db: Sessão do banco de dados injetada pelo FastAPI.
+    :type db: Session
+    :return: Matrícula, nome e quantidade de disciplinas importadas.
+    :rtype: UploadPdfResponse
+    :raises HTTPException 400: Se o PDF não puder ser processado.
+    :raises HTTPException 422: Se a matrícula não for encontrada no PDF.
+    """
+    try:
+        conteudo = file.file.read()
+        with pdfplumber.open(io.BytesIO(conteudo)) as pdf:
+            texto = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Não foi possível ler o PDF.")
+
+    dados_aluno  = _parse_aluno_pdf(texto)
+    disciplinas  = _parse_historico_pdf(texto)
+
+    if not dados_aluno["matricula"]:
+        raise HTTPException(
+            status_code=422,
+            detail="Matrícula não encontrada no PDF. Verifique se é o histórico correto.",
+        )
+
+    payload = HistoricoInput(
+        matricula        = dados_aluno["matricula"],
+        nome             = dados_aluno["nome"] or "Aluno",
+        curso            = dados_aluno["curso"] or "Não identificado",
+        ano_ingresso     = int(dados_aluno["ano_ingresso"] or 0),
+        periodo_ingresso = dados_aluno["semestre_ingresso"] or "1",
+        cr               = float(dados_aluno["cr"]) if dados_aluno["cr"] else None,
+        disciplinas      = [
+            {"codigo": d["codigo"], "media": float(d["media"]) if d["media"] else None,
+             "ano": int(d["ano"]), "semestre": int(d["semestre"])}
+            for d in disciplinas
+        ],
+    )
+
+    salvar_historico(payload, db)
+
+    return UploadPdfResponse(
+        matricula              = payload.matricula,
+        nome                   = payload.nome,
+        disciplinas_importadas = len(disciplinas),
+    )
 
 
 @router.post("/historico", response_model=HistoricoResponse, status_code=201)
