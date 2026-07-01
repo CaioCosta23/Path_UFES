@@ -1,5 +1,7 @@
 import styles from "../styles/About.module.css";
 
+import fotoDev1 from "../assets/images/authors/Caio-Path_UFES.jpg"
+
 export default function About() {
     return (
         <div className = {styles.container}>
@@ -20,12 +22,12 @@ export default function About() {
                 <h2 className = {styles.sectionTitle}>Desenvolvedores</h2>
                 <div className = {styles.devGrid}>
                     <div className = {styles.devCard}>
-                        <div className = {styles.devAvatar}>avatar</div>
+                        <img src = {fotoDev1} alt = "Caio Costa Lopes" className = {styles.devAvatar}/>
                         <h3 className = {styles.devName}>Caio Costa Lopes</h3>
                     </div>
                     <div className = {styles.devCard}>
-                        <div className = {styles.devAvatar}>Daniel Sbrocco Olimpio</div>
-                        <h3 className = {styles.devName}>Nome 2</h3>
+                        <div className = {styles.devAvatar}>avatar</div>
+                        <h3 className = {styles.devName}>Daniel Sbrocco Olimpio</h3>
                     </div>
                     <div className = {styles.devCard}>
                         <div className = {styles.devAvatar}>avatar</div>
