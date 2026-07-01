@@ -21,15 +21,15 @@ export default function About() {
                 <div className = {styles.devGrid}>
                     <div className = {styles.devCard}>
                         <div className = {styles.devAvatar}>avatar</div>
-                        <h3 className = {styles.devName}>Nome1</h3>
+                        <h3 className = {styles.devName}>Caio Costa Lopes</h3>
                     </div>
                     <div className = {styles.devCard}>
-                        <div className = {styles.devAvatar}>avatar</div>
+                        <div className = {styles.devAvatar}>Daniel Sbrocco Olimpio</div>
                         <h3 className = {styles.devName}>Nome 2</h3>
                     </div>
                     <div className = {styles.devCard}>
                         <div className = {styles.devAvatar}>avatar</div>
-                        <h3 className = {styles.devName}>Nome3</h3>
+                        <h3 className = {styles.devName}>Miguel Zon Murad</h3>
                     </div>
                     
                 </div>
