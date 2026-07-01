@@ -32,6 +32,26 @@
     min-width: 700px;
 }
 
+.githubLink {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background-color: black;
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-decoration: none;
+    width: fit-content;
+    transition: background-color var(--transition);
+}
+
+.github:hover {
+    background-color: azure;
+    color: black;
+}
+
 .infoGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -104,6 +124,18 @@
     font-size: var(--font-size-base);
     font-weight: 600;
     color: var(--color-primary);
+}
+
+.devGitHub {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.devGitHub:hover {
+    color: var(--color-primary-hover);
 }
 
 @media (max-width: 768px) {
