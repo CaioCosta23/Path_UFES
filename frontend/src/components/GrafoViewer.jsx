@@ -8,6 +8,7 @@ export default function GrafoViewer() {
         nos,
         arestas,
         elementoSelecionado,
+        alunoImportado,
         loading,
         erro,
         adicionarNo,
@@ -169,6 +170,13 @@ export default function GrafoViewer() {
                 {erro && (
                     <p style = {{color: "var(--color-error)"}}>
                         Erro: {erro}
+                    </p>
+                )}
+                {alunoImportado && (
+                    <p style = {{color: "var(--color-success, green)"}}>
+                        Histórico importado: <strong>{alunoImportado.nome}</strong>
+                        {" "}(matrícula: {alunoImportado.matricula}) —{" "}
+                        {alunoImportado.disciplinas_importadas} disciplinas salvas.
                     </p>
                 )}
                 {elementoSelecionado ? (
