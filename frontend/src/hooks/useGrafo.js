@@ -13,7 +13,6 @@ export function useGrafo() {
     const [alunoImportado, setAlunoImportado] = useState(null);
 
     useEffect(() => {
-        console.log("containerRef:", containerRef.current);
         if (!containerRef.current)
             return;
 

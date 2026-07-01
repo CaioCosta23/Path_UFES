@@ -51,10 +51,6 @@ export default function GrafoViewer() {
                 const elementos = JSON.parse(e.target.result);
                 carregarGrafo(elementos);
             }catch {
-                /*
-                console.error("Erro ao carregar arquivo:", err);
-                alert(`Arquivo inválido: ${err.message}`);
-                 */
                 alert("Arquivo invalido. Use um JSON válido.");
             }
         };
@@ -120,7 +116,7 @@ export default function GrafoViewer() {
                     className = {styles.button}
                     onClick = {handleAdicionarNo}
                 >
-                    Adicionar Aresta
+                    Adicionar Nó
                 </button>
             </div>
 
@@ -200,7 +196,7 @@ export default function GrafoViewer() {
                         )}
                     </p>
                 ) : (
-                    <p>Nós: {nos.length} | Arestas: {arestas.length} | Clieque em um elemento para ver detalhes</p>
+                    <p>Nós: {nos.length} | Arestas: {arestas.length} | Clique em um elemento para ver detalhes</p>
                 
                 )}
             </div>
