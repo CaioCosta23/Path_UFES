@@ -8,6 +8,10 @@ import About from "./pages/About";
 import "./styles/global.css";
 import "./App.css";
 
+/**
+ * 
+ * @returns Aplicação central que mostrará todo o "front-end" do projeto;
+ */
 export default function App() {
   return (
     <BrowserRouter>
