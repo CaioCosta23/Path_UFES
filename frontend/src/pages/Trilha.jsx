@@ -43,9 +43,7 @@ function formatarAulas(aulas) {
 export default function Trilha() {
     const {trilha, loading, erro, gerarTrilha} = useTrilha();
 
-    const [matricula, setMatricula] = useState(
-        () => localStorage.getItem("pathufes_matricula") || ""
-    );
+    const [matricula, setMatricula] = useState("");
     const [semestre, setSemestre]                     = useState("2026/2");
     const [maxDisc, setMaxDisc]                       = useState(5);
     const [horariosBloqueados, setHorariosBloqueados] = useState([]);
