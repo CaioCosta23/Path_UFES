@@ -120,17 +120,30 @@ class DisciplinaDisponivel(BaseModel):
 # GET /aluno/{matricula}/trilha
 # ---------------------------------------------------------------------------
 
+class AulaInfo(BaseModel):
+    """
+    Horário de um bloco de aula de uma disciplina.
+
+    ``dias`` lista os valores do enum DiaSemana (ex.: ["SEGUNDA", "QUARTA"]).
+    ``horarios`` lista os valores do enum Horario (ex.: ["H08_09", "H09_10"]).
+    """
+    dias:     list[str]
+    horarios: list[str]
+
+
 class DisciplinaTrilha(BaseModel):
     """
     Entrada de uma disciplina (ou placeholder de optativa) na trilha.
 
     Obrigatórias possuem ``codigo`` e ``nome`` reais. Placeholders de
     optativas têm ``codigo=None`` e ``nome`` no formato "OptativaXX".
+    ``aulas`` é preenchido somente quando há horários cadastrados no banco.
     """
     codigo:          str | None
     nome:            str
     creditos:        int | None
     tipo_disciplina: str
+    aulas:           list[AulaInfo] = []
 
 
 class OptativaPrevista(BaseModel):
@@ -165,6 +178,9 @@ class TrilhaResponse(BaseModel):
 
     Contém a sequência de semestres com as disciplinas sugeridas para
     o aluno concluir o curso.
+    ``optativas_faltantes`` indica quantas optativas o aluno ainda precisa
+    cursar para atingir as 9 exigidas pelo currículo de CC/UFES.
     """
-    matricula: str
-    semestres: list[SemestreTrilha]
+    matricula:           str
+    semestres:           list[SemestreTrilha]
+    optativas_faltantes: int

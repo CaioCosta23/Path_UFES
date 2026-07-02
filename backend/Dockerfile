@@ -8,4 +8,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["fastapi", "run", "app/main.py", "--port", "8000"]
+ENTRYPOINT ["bash", "entrypoint.sh"]

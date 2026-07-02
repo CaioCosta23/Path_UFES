@@ -23,8 +23,10 @@ from app.models import Aluno, Historico, Disciplina, PeriodoOferta, TipoDiscipli
 from app.models import historico_disciplinas as hist_disc_table
 from app.schemas import (
     HistoricoInput, HistoricoResponse, UploadPdfResponse, DisciplinaDisponivel,
-    DisciplinaTrilha, OptativaPrevista, SemestreTrilha, TrilhaResponse,
+    AulaInfo, DisciplinaTrilha, OptativaPrevista, SemestreTrilha, TrilhaResponse,
 )
+
+OPTATIVAS_EXIGIDAS = 9
 
 router = APIRouter(prefix="/aluno", tags=["aluno"])
 
@@ -304,6 +306,59 @@ def get_disponiveis(matricula: str, db: Session = Depends(get_db)):
 # Funções auxiliares para o algoritmo de trilha
 # ---------------------------------------------------------------------------
 
+def _tem_conflito_horario(
+    disc: Disciplina,
+    horarios_bloqueados: list[str],
+    semestre_atual: str,
+) -> bool:
+    """
+    Verifica se a disciplina tem alguma aula em horário bloqueado pelo aluno
+    no semestre em questão.
+
+    Cada elemento de ``horarios_bloqueados`` aceita dois formatos:
+
+    - ``"DIA:HORARIO"`` — restrição global, aplica-se a **todos** os semestres.
+    - ``"SEMESTRE:DIA:HORARIO"`` — restrição específica, aplica-se **somente**
+      ao semestre indicado (ex.: ``"2026/2:SEGUNDA:H08_09"``).
+
+    Há conflito quando o dia E o horário bloqueados pertencem à mesma ``Aula``
+    da disciplina. Disciplinas sem aulas cadastradas nunca conflitam.
+
+    :param disc: Disciplina a verificar.
+    :type disc: Disciplina
+    :param horarios_bloqueados: Lista de restrições no formato descrito acima.
+    :type horarios_bloqueados: list[str]
+    :param semestre_atual: Semestre sendo avaliado (ex.: ``"2026/2"``).
+    :type semestre_atual: str
+    :return: True se houver conflito de horário neste semestre.
+    :rtype: bool
+    """
+    if not horarios_bloqueados or not disc.aulas:
+        return False
+    tipo_atual = _tipo_semestre(semestre_atual)
+    for aula in disc.aulas:
+        # Aulas com tipo_semestre definido só se aplicam no semestre correto
+        if aula.tipo_semestre is not None and aula.tipo_semestre != tipo_atual:
+            continue
+        dias_aula = {d.dia_semana.value for d in aula.dias}
+        hors_aula = {h.horario.value for h in aula.horarios}
+        for bloqueado in horarios_bloqueados:
+            parts = bloqueado.split(":", 2)  # no máximo 3 partes
+            if len(parts) == 2:
+                # Global: "DIA:HORARIO" — aplica a todos os semestres
+                dia, hora = parts
+            elif len(parts) == 3:
+                # Específica: "SEMESTRE:DIA:HORARIO" — só naquele semestre
+                sem, dia, hora = parts
+                if sem != semestre_atual:
+                    continue
+            else:
+                continue
+            if dia in dias_aula and hora in hors_aula:
+                return True
+    return False
+
+
 def _proximo_semestre(semestre: str) -> str:
     """
     Retorna o semestre imediatamente seguinte.
@@ -434,6 +489,13 @@ def get_trilha(
         description='Semestre a partir do qual gerar a trilha, ex: "2026/2"',
     ),
     max_disciplinas: int = Query(5, ge=1, le=10),
+    horarios_bloqueados: list[str] = Query(
+        default=[],
+        description=(
+            "Pares DIA:HORARIO que o aluno não pode frequentar "
+            "(ex: SEGUNDA:H08_09). Disciplinas sem aulas cadastradas nunca são excluídas."
+        ),
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -451,8 +513,11 @@ def get_trilha(
 
     Isso garante que as disciplinas que mais atrasam o curso se postergadas
     sejam sempre agendadas primeiro. Os slots restantes até ``max_disciplinas``
-    são preenchidos com placeholders de optativas ("Optativa01", ...), e para
-    cada semestre é calculada a lista de optativas prováveis compatíveis.
+    são preenchidos com placeholders de optativas ("Optativa01", ...) até o
+    limite de ``OPTATIVAS_EXIGIDAS - optativas_já_aprovadas``. Quando todas as
+    obrigatórias acabam e ainda faltam optativas, semestres extras exclusivos
+    de optativas são criados até completar o total exigido. Para cada semestre
+    é calculada também a lista de optativas prováveis compatíveis.
 
     :param matricula: Matrícula do aluno.
     :type matricula: str
@@ -460,9 +525,14 @@ def get_trilha(
     :type semestre_inicio: str
     :param max_disciplinas: Número máximo de disciplinas por semestre (1–10).
     :type max_disciplinas: int
+    :param horarios_bloqueados: Pares "DIA:HORARIO" que o aluno não pode frequentar.
+        Disciplinas cujos horários conflitem com algum par são excluídas da trilha.
+        Disciplinas sem aulas cadastradas nunca são excluídas.
+    :type horarios_bloqueados: list[str]
     :param db: Sessão do banco de dados injetada pelo FastAPI.
     :type db: Session
-    :return: Trilha semestre a semestre com disciplinas e optativas previstas.
+    :return: Trilha semestre a semestre com disciplinas, optativas previstas e
+        quantidade de optativas que ainda faltam para completar o currículo.
     :rtype: TrilhaResponse
     """
     historico = db.execute(
@@ -491,12 +561,21 @@ def get_trilha(
         and d.codigo not in aprovadas
     ]
 
-    # Optativas ainda não aprovadas (usadas apenas na lista de previstas)
+    # Optativas ainda não aprovadas (usadas na lista de previstas)
     optativas = [
         d for d in todas
         if d.tipo_disciplina == TipoDisciplina.OPTATIVA
         and d.codigo not in aprovadas
     ]
+
+    # Quantas optativas o aluno ainda precisa cursar
+    optativas_aprovadas_count = sum(
+        1 for d in todas
+        if d.tipo_disciplina == TipoDisciplina.OPTATIVA
+        and d.codigo in aprovadas
+    )
+    optativas_faltantes = max(0, OPTATIVAS_EXIGIDAS - optativas_aprovadas_count)
+    optativas_agendadas = 0  # contador global de placeholders já incluídos na trilha
 
     # cumpridas acumula aprovadas + agendadas em semestres anteriores.
     # Cada iteração adiciona as escolhidas, desbloqueando novos pré-requisitos.
@@ -521,11 +600,12 @@ def get_trilha(
                 requer_map[prereq.codigo].add(d.codigo)
         memo: dict = {}
 
-        # Disciplinas prontas: pré-requisitos todos cumpridos E período compatível
+        # Disciplinas prontas: pré-req cumpridos, período compatível, sem conflito de horário
         prontas = [
             d for d in pendentes
             if all(p.codigo in cumpridas for p in d.pre_requisitos)
             and _compativel(d.periodo_oferta, tipo)
+            and not _tem_conflito_horario(d, horarios_bloqueados, semestre_atual)
         ]
 
         # Ordena pelo caminho crítico em calendário (descendente).
@@ -546,25 +626,37 @@ def get_trilha(
             semestre_atual = _proximo_semestre(semestre_atual)
             continue
 
-        # Monta a lista de disciplinas do semestre
+        # Monta a lista de disciplinas do semestre com dados de aula
         disciplinas_semestre: list[DisciplinaTrilha] = [
             DisciplinaTrilha(
                 codigo=d.codigo,
                 nome=d.nome,
                 creditos=d.creditos,
                 tipo_disciplina=d.tipo_disciplina.value,
+                aulas=[
+                    AulaInfo(
+                        dias=[ad.dia_semana.value for ad in a.dias],
+                        horarios=[ah.horario.value for ah in a.horarios],
+                    )
+                    for a in d.aulas
+                    if a.tipo_semestre is None or a.tipo_semestre == tipo
+                ],
             )
             for d in escolhidas
         ]
 
-        # Slots restantes até max_disciplinas viram placeholders de optativas
-        for i in range(1, max_disciplinas - len(escolhidas) + 1):
+        # Slots restantes viram placeholders de optativas, respeitando o total necessário
+        slots_disponiveis = max_disciplinas - len(escolhidas)
+        slots_op = min(slots_disponiveis, optativas_faltantes - optativas_agendadas)
+        for _ in range(slots_op):
+            optativas_agendadas += 1
             disciplinas_semestre.append(
                 DisciplinaTrilha(
                     codigo=None,
-                    nome=f"Optativa{i:02d}",
+                    nome=f"Optativa{optativas_agendadas:02d}",
                     creditos=None,
                     tipo_disciplina="OP",
+                    aulas=[],
                 )
             )
 
@@ -594,4 +686,43 @@ def get_trilha(
 
         semestre_atual = _proximo_semestre(semestre_atual)
 
-    return TrilhaResponse(matricula=matricula, semestres=semestres)
+    # Quando todas as obrigatórias acabam e ainda faltam optativas,
+    # cria semestres extras exclusivos de placeholders até atingir o total exigido.
+    while optativas_agendadas < optativas_faltantes and len(semestres) < MAX_SEMESTRES:
+        tipo = _tipo_semestre(semestre_atual)
+        slots_op = min(max_disciplinas, optativas_faltantes - optativas_agendadas)
+        disciplinas_semestre = []
+        for _ in range(slots_op):
+            optativas_agendadas += 1
+            disciplinas_semestre.append(
+                DisciplinaTrilha(
+                    codigo=None,
+                    nome=f"Optativa{optativas_agendadas:02d}",
+                    creditos=None,
+                    tipo_disciplina="OP",
+                    aulas=[],
+                )
+            )
+        optativas_previstas: list[OptativaPrevista] = sorted(
+            [
+                OptativaPrevista(codigo=d.codigo, nome=d.nome, creditos=d.creditos)
+                for d in optativas
+                if all(p.codigo in cumpridas for p in d.pre_requisitos)
+                and _compativel(d.periodo_oferta, tipo)
+                and d.codigo not in cumpridas
+            ],
+            key=lambda o: o.nome,
+        )
+        semestres.append(SemestreTrilha(
+            semestre=semestre_atual,
+            tipo=tipo,
+            disciplinas=disciplinas_semestre,
+            optativas_previstas=optativas_previstas,
+        ))
+        semestre_atual = _proximo_semestre(semestre_atual)
+
+    return TrilhaResponse(
+        matricula=matricula,
+        semestres=semestres,
+        optativas_faltantes=optativas_faltantes,
+    )

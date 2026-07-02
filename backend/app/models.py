@@ -38,6 +38,31 @@ class PeriodoOferta(str, enum.Enum):
     AMBOS = "AMBOS"
 
 
+class DiaSemana(str, enum.Enum):
+    """Dia da semana em que uma aula ocorre."""
+    SEGUNDA = "SEGUNDA"
+    TERCA   = "TERCA"
+    QUARTA  = "QUARTA"
+    QUINTA  = "QUINTA"
+    SEXTA   = "SEXTA"
+
+
+class Horario(str, enum.Enum):
+    """Faixa de horário em que uma aula ocorre."""
+    H07_08 = "H07_08"
+    H08_09 = "H08_09"
+    H09_10 = "H09_10"
+    H10_11 = "H10_11"
+    H11_12 = "H11_12"
+    H12_13 = "H12_13"
+    H13_14 = "H13_14"
+    H14_15 = "H14_15"
+    H15_16 = "H15_16"
+    H16_17 = "H16_17"
+    H17_18 = "H17_18"
+    H18_19 = "H18_19"
+
+
 # ---------------------------------------------------------------------------
 # Tabela associativa: pré-requisitos (auto-referência de Disciplina)
 # Cada linha representa uma aresta do grafo: disciplina → pré-requisito
@@ -117,6 +142,49 @@ class Disciplina(Base):
         secondaryjoin=lambda: Disciplina.codigo == prerequisitos.c.codigo_prereq,
         backref="requerida_por",
     )
+
+    aulas = relationship("Aula", back_populates="disciplina", cascade="all, delete-orphan")
+
+
+# ---------------------------------------------------------------------------
+# Aula — horários de uma disciplina (DiaSemana × Horario)
+# ---------------------------------------------------------------------------
+
+class Aula(Base):
+    """
+    Representa um bloco de aula de uma disciplina.
+
+    Cada Aula ocorre em um conjunto de dias da semana e faixas de horário.
+    Um aluno que bloquear um dia pode ter disciplinas filtradas da trilha.
+    """
+
+    __tablename__ = "aulas"
+
+    id                = Column(Integer, primary_key=True, autoincrement=True)
+    codigo_disciplina = Column(String, ForeignKey("disciplinas.codigo"), nullable=False)
+    tipo_semestre     = Column(String(6), nullable=True)
+
+    disciplina = relationship("Disciplina", back_populates="aulas")
+    dias       = relationship("AulaDia",     cascade="all, delete-orphan")
+    horarios   = relationship("AulaHorario", cascade="all, delete-orphan")
+
+
+class AulaDia(Base):
+    """Associa uma Aula a um DiaSemana (ex.: SEGUNDA)."""
+
+    __tablename__ = "aula_dias"
+
+    aula_id    = Column(Integer, ForeignKey("aulas.id"), primary_key=True)
+    dia_semana = Column(Enum(DiaSemana), primary_key=True)
+
+
+class AulaHorario(Base):
+    """Associa uma Aula a uma faixa de Horario (ex.: H08_09)."""
+
+    __tablename__ = "aula_horarios"
+
+    aula_id = Column(Integer, ForeignKey("aulas.id"), primary_key=True)
+    horario = Column(Enum(Horario), primary_key=True)
 
 
 # ---------------------------------------------------------------------------

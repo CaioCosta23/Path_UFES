@@ -150,8 +150,12 @@ Para executar a aplicação basta rodar o(s) seguinte(s) comando(s):
 
 ```GnuBash
 cd Path_UFES
-docker compose up
+docker compose up --build
 ```
+
+> Na primeira execução o `--build` é obrigatório para construir as imagens. Nas execuções seguintes, `docker compose up` já é suficiente.
+>
+> O container do backend aguarda o banco subir, aplica as migrations e popula o banco automaticamente antes de iniciar a API.
 
 ---
 

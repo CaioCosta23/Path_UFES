@@ -2,6 +2,7 @@ import {BrowserRouter, Routes, Route} from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Grafo from "./pages/Grafo";
+import Trilha from "./pages/Trilha";
 import About from "./pages/About";
 
 import "./styles/global.css";
@@ -15,9 +16,8 @@ export default function App() {
           <Routes>
             <Route path = "/" element = {<Home/>}/>
             <Route path = "/grafo" element = {<Grafo/>}/>
+            <Route path = "/trilha" element = {<Trilha/>}/>
             <Route path = "/about" element = {<About/>}/>
-
-            {/*Rota Coringa: Cria um caminho automático que volta para a Home (quaquer caminho desconhecido) */}
             <Route path = "*" element = {<Home/>}/>
           </Routes>
       </main>

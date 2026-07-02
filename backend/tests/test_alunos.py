@@ -10,8 +10,9 @@ from unittest.mock import MagicMock, patch
 
 from sqlalchemy import insert
 
-from app.models import Disciplina, TipoDisciplina, Departamento, PeriodoOferta
+from app.models import Disciplina, TipoDisciplina, Departamento, PeriodoOferta, DiaSemana, Horario
 from app.models import prerequisitos as prereq_table
+from app.models import Aula, AulaDia, AulaHorario
 
 MATRICULA = "2023999999"
 
@@ -47,6 +48,25 @@ def _inserir_disciplina(db, codigo: str, nome: str, periodo: int = 1):
         "departamento":     Departamento.DI,
         "periodo_sugerido": periodo,
     }))
+
+
+def _inserir_aula(db, codigo_disciplina: str, dia: DiaSemana, horario: Horario) -> None:
+    """
+    Insere uma Aula com um dia e horário específicos no banco de teste.
+
+    :param db: Sessão do banco de teste.
+    :param codigo_disciplina: Código da disciplina dona da aula.
+    :type codigo_disciplina: str
+    :param dia: Dia da semana em que a aula ocorre.
+    :type dia: DiaSemana
+    :param horario: Faixa de horário da aula.
+    :type horario: Horario
+    """
+    aula = Aula(codigo_disciplina=codigo_disciplina)
+    db.add(aula)
+    db.flush()
+    db.add(AulaDia(aula_id=aula.id, dia_semana=dia))
+    db.add(AulaHorario(aula_id=aula.id, horario=horario))
 
 
 def _inserir_prereq(db, disciplina: str, prereq: str):
@@ -366,3 +386,165 @@ def test_trilha_gera_placeholder_optativa(client, db_session):
     # placeholder não tem código
     placeholder = next(d for d in disciplinas if d["nome"] == "Optativa01")
     assert placeholder["codigo"] is None
+
+
+# ---------------------------------------------------------------------------
+# GET /aluno/{matricula}/trilha — filtro de horarios_bloqueados
+# ---------------------------------------------------------------------------
+
+def test_trilha_exclui_disciplina_com_conflito_de_horario(client, db_session):
+    """
+    Disciplina com aula na SEGUNDA H08_09 deve ser excluída quando esse slot
+    está bloqueado. Disciplina em dia diferente deve permanecer na trilha.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc Segunda")
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Disc Quarta")
+    db_session.commit()
+
+    _inserir_aula(db_session, "INF00001", DiaSemana.SEGUNDA, Horario.H08_09)
+    _inserir_aula(db_session, "INF00002", DiaSemana.QUARTA,  Horario.H08_09)
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1"
+        "&horarios_bloqueados=SEGUNDA:H08_09"
+    )
+    assert resp.status_code == 200
+    todos_codigos = [
+        d["codigo"]
+        for sem in resp.json()["semestres"]
+        for d in sem["disciplinas"]
+    ]
+    assert "INF00002" in todos_codigos      # quarta: sem conflito
+    assert "INF00001" not in todos_codigos  # segunda H08_09: bloqueada
+
+
+def test_trilha_sem_aulas_sempre_disponivel(client, db_session):
+    """
+    Disciplina sem aulas cadastradas deve aparecer na trilha mesmo com
+    horários bloqueados.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Sem Aulas")
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    # Bloqueia vários slots sem que INF00001 tenha aulas cadastradas
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1"
+        "&horarios_bloqueados=SEGUNDA:H08_09&horarios_bloqueados=TERCA:H10_11"
+        "&horarios_bloqueados=QUARTA:H14_15&horarios_bloqueados=QUINTA:H16_17"
+        "&horarios_bloqueados=SEXTA:H07_08"
+    )
+    assert resp.status_code == 200
+    todos_codigos = [
+        d["codigo"]
+        for sem in resp.json()["semestres"]
+        for d in sem["disciplinas"]
+    ]
+    assert "INF00001" in todos_codigos  # sem aulas → nunca filtrada
+
+
+def test_trilha_nao_exclui_horario_diferente_no_mesmo_dia(client, db_session):
+    """
+    Disciplina com aula na SEGUNDA H08_09 NÃO deve ser excluída quando
+    apenas SEGUNDA:H10_11 está bloqueado (mesmo dia, horário diferente).
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc Segunda Manha")
+    db_session.commit()
+
+    _inserir_aula(db_session, "INF00001", DiaSemana.SEGUNDA, Horario.H08_09)
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1"
+        "&horarios_bloqueados=SEGUNDA:H10_11"
+    )
+    assert resp.status_code == 200
+    todos_codigos = [
+        d["codigo"]
+        for sem in resp.json()["semestres"]
+        for d in sem["disciplinas"]
+    ]
+    assert "INF00001" in todos_codigos  # H08_09 ≠ H10_11: sem conflito
+
+
+def test_trilha_optativas_faltantes_descontadas_do_historico(client, db_session):
+    """
+    optativas_faltantes na resposta deve descontar as optativas já aprovadas;
+    o total exigido é 9.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Obrigatoria")
+    for i in range(3):
+        _inserir_disciplina_com_oferta(
+            db_session, f"OPT0000{i}", f"Optativa Aprovada {i}",
+            tipo=TipoDisciplina.OPTATIVA,
+        )
+    db_session.commit()
+
+    payload = {**PAYLOAD_BASE, "disciplinas": [
+        {"codigo": f"OPT0000{i}", "media": 8.0, "ano": 2023, "semestre": 1}
+        for i in range(3)
+    ]}
+    client.post("/aluno/historico", json=payload)
+
+    resp = client.get(f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["optativas_faltantes"] == 6  # 9 - 3 aprovadas = 6
+
+
+def test_trilha_restricao_horario_por_semestre_especifico(client, db_session):
+    """
+    Restrição no formato SEMESTRE:DIA:HORARIO exclui a disciplina APENAS naquele
+    semestre e a libera nos seguintes. Restrição em 2026/1 → disciplina migra para 2026/2.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc Segunda")
+    db_session.commit()
+    _inserir_aula(db_session, "INF00001", DiaSemana.SEGUNDA, Horario.H08_09)
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1"
+        "&horarios_bloqueados=2026/1:SEGUNDA:H08_09"  # só bloqueia em 2026/1
+    )
+    assert resp.status_code == 200
+    semestres = resp.json()["semestres"]
+
+    # 2026/1 não tem prontas → algoritmo avança para 2026/2
+    # len(semestres) pode ser >1 por placeholders de optativas adicionados pelo pós-loop
+    assert semestres[0]["semestre"] == "2026/2"
+    codigos_sem1 = [d["codigo"] for d in semestres[0]["disciplinas"]]
+    assert "INF00001" in codigos_sem1
+    todos_semestres = [s["semestre"] for s in semestres]
+    assert "2026/1" not in todos_semestres
+
+
+def test_trilha_completa_9_optativas_apos_obrigatorias(client, db_session):
+    """
+    Após esgotar todas as obrigatórias, a trilha deve criar semestres extras
+    com placeholders de optativas até atingir as 9 exigidas no total.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Unica Obrigatoria")
+    db_session.commit()
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1&max_disciplinas=1"
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+
+    todos_nomes = [
+        d["nome"]
+        for sem in data["semestres"]
+        for d in sem["disciplinas"]
+    ]
+    opt_count = sum(1 for n in todos_nomes if n.startswith("Optativa"))
+    assert opt_count == 9
