@@ -3,12 +3,42 @@ import {useTrilha} from "../hooks/useTrilha";
 import styles from "../styles/Trilha.module.css";
 
 const DIAS = [
-    {value: "SEGUNDA", label: "Segunda"},
-    {value: "TERCA",   label: "Terça"},
-    {value: "QUARTA",  label: "Quarta"},
-    {value: "QUINTA",  label: "Quinta"},
-    {value: "SEXTA",   label: "Sexta"},
+    {value: "SEGUNDA", label: "Seg"},
+    {value: "TERCA",   label: "Ter"},
+    {value: "QUARTA",  label: "Qua"},
+    {value: "QUINTA",  label: "Qui"},
+    {value: "SEXTA",   label: "Sex"},
 ];
+
+const HORARIOS = [
+    {value: "H07_08", label: "07h"},
+    {value: "H08_09", label: "08h"},
+    {value: "H09_10", label: "09h"},
+    {value: "H10_11", label: "10h"},
+    {value: "H11_12", label: "11h"},
+    {value: "H12_13", label: "12h"},
+    {value: "H13_14", label: "13h"},
+    {value: "H14_15", label: "14h"},
+    {value: "H15_16", label: "15h"},
+    {value: "H16_17", label: "16h"},
+    {value: "H17_18", label: "17h"},
+    {value: "H18_19", label: "18h"},
+];
+
+const DIA_LABELS = {
+    SEGUNDA: "Seg", TERCA: "Ter", QUARTA: "Qua", QUINTA: "Qui", SEXTA: "Sex",
+};
+
+function formatarAulas(aulas) {
+    if (!aulas || aulas.length === 0) return null;
+    return aulas.map(({dias, horarios}) => {
+        const diasLabel = dias.map((d) => DIA_LABELS[d] ?? d).join("/");
+        const sorted    = [...horarios].sort();
+        const inicio    = sorted[0].slice(1, 3);      // "H07_08" → "07"
+        const fim       = sorted.at(-1).slice(4, 6);  // "H08_09" → "09"
+        return `${diasLabel} ${inicio}-${fim}h`;
+    }).join(", ");
+}
 
 export default function Trilha() {
     const {trilha, loading, erro, gerarTrilha} = useTrilha();
@@ -16,19 +46,31 @@ export default function Trilha() {
     const [matricula, setMatricula] = useState(
         () => localStorage.getItem("pathufes_matricula") || ""
     );
-    const [semestre, setSemestre] = useState("2026/2");
-    const [maxDisc, setMaxDisc] = useState(5);
-    const [diasBloqueados, setDiasBloqueados] = useState([]);
+    const [semestre, setSemestre]                     = useState("2026/2");
+    const [maxDisc, setMaxDisc]                       = useState(5);
+    const [horariosBloqueados, setHorariosBloqueados] = useState([]);
+    const [semestresRestricao, setSemestresRestricao] = useState(""); // "2026/2" ou "2026/2, 2027/1"
 
-    const toggleDia = (dia) => {
-        setDiasBloqueados((prev) =>
-            prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
+    const toggleHorario = (dia, hora) => {
+        const key = `${dia}:${hora}`;
+        setHorariosBloqueados((prev) =>
+            prev.includes(key) ? prev.filter((h) => h !== key) : [...prev, key]
         );
     };
 
     const handleGerar = (e) => {
         e.preventDefault();
-        gerarTrilha(matricula, semestre, maxDisc, diasBloqueados);
+        const semestres = semestresRestricao
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        const bloqueados =
+            semestres.length === 0
+                ? horariosBloqueados                                        // global: "DIA:HORARIO"
+                : semestres.flatMap((sem) =>
+                      horariosBloqueados.map((h) => `${sem}:${h}`)         // específico: "SEM:DIA:HORARIO"
+                  );
+        gerarTrilha(matricula, semestre, maxDisc, bloqueados);
     };
 
     return (
@@ -83,21 +125,80 @@ export default function Trilha() {
                         </div>
                     </div>
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Dias que não posso ter aula</label>
-                        <div className={styles.checkboxGroup}>
-                            {DIAS.map(({value, label}) => (
-                                <label key={value} className={styles.checkboxLabel}>
-                                    <input
-                                        type="checkbox"
-                                        checked={diasBloqueados.includes(value)}
-                                        onChange={() => toggleDia(value)}
-                                    />
-                                    {label}
-                                </label>
-                            ))}
+                    {/* Grade de horários bloqueados — ocupa toda a largura */}
+                    <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                        <label className={styles.label}>
+                            Horários que não posso ter aula
+                            {horariosBloqueados.length > 0 && (
+                                <span className={styles.bloqueadosCount}>
+                                    {horariosBloqueados.length} bloqueado(s)
+                                </span>
+                            )}
+                        </label>
+                        <div className={styles.scheduleWrapper}>
+                            <table className={styles.scheduleTable}>
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        {HORARIOS.map(({value, label}) => (
+                                            <th key={value} className={styles.scheduleHoraTh}>
+                                                {label}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {DIAS.map(({value: dia, label: diaLabel}) => (
+                                        <tr key={dia}>
+                                            <td className={styles.scheduleDia}>{diaLabel}</td>
+                                            {HORARIOS.map(({value: hora}) => {
+                                                const key     = `${dia}:${hora}`;
+                                                const blocked = horariosBloqueados.includes(key);
+                                                return (
+                                                    <td key={hora} className={styles.scheduleCell}>
+                                                        <button
+                                                            type="button"
+                                                            className={`${styles.scheduleBtn} ${blocked ? styles.scheduleBtnBlocked : ""}`}
+                                                            onClick={() => toggleHorario(dia, hora)}
+                                                            title={`${diaLabel} ${hora.slice(1, 3)}:00`}
+                                                        />
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
+                        {horariosBloqueados.length > 0 && (
+                            <button
+                                type="button"
+                                className={styles.limparBtn}
+                                onClick={() => setHorariosBloqueados([])}
+                            >
+                                Limpar seleção
+                            </button>
+                        )}
                     </div>
+
+                    {/* Campo de semestres — aparece só quando há slots bloqueados */}
+                    {horariosBloqueados.length > 0 && (
+                        <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                            <label className={styles.label}>
+                                Aplicar restrição apenas nestes semestres (opcional)
+                            </label>
+                            <input
+                                className={styles.input}
+                                type="text"
+                                placeholder="ex: 2026/2  ou  2026/2, 2027/1"
+                                value={semestresRestricao}
+                                onChange={(e) => setSemestresRestricao(e.target.value)}
+                            />
+                            <span className={styles.fieldHint}>
+                                Deixe em branco para bloquear em <strong>todos</strong> os semestres.
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <button
@@ -117,10 +218,18 @@ export default function Trilha() {
             {/* Resultados */}
             {trilha && (
                 <div className={styles.resultado}>
-                    <p className={styles.resumo}>
-                        Trilha gerada: <strong>{trilha.semestres.length} semestres</strong> até a
-                        formatura para a matrícula <strong>{trilha.matricula}</strong>.
-                    </p>
+                    <div className={styles.resumo}>
+                        <p>
+                            Trilha gerada: <strong>{trilha.semestres.length} semestres</strong> até
+                            a formatura — matrícula <strong>{trilha.matricula}</strong>.
+                        </p>
+                        <p className={styles.resumoOpt}>
+                            {trilha.optativas_faltantes === 0
+                                ? "Optativas: todas as 9 exigidas já cumpridas."
+                                : <>Faltam <strong>{trilha.optativas_faltantes}</strong> optativa(s) de 9 exigidas.</>
+                            }
+                        </p>
+                    </div>
 
                     {/* Legenda */}
                     <div className={styles.legenda}>
@@ -154,33 +263,40 @@ export default function Trilha() {
                                                 <th>Código</th>
                                                 <th>Disciplina</th>
                                                 <th>Créd.</th>
+                                                <th>Horários</th>
                                                 <th>Tipo</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {sem.disciplinas.map((disc, i) => (
-                                                <tr
-                                                    key={disc.codigo || `op-${i}`}
-                                                    className={disc.codigo ? "" : styles.rowOptativa}
-                                                >
-                                                    <td className={styles.tdCodigo}>
-                                                        {disc.codigo ?? "—"}
-                                                    </td>
-                                                    <td>{disc.nome}</td>
-                                                    <td>{disc.creditos ?? "—"}</td>
-                                                    <td>
-                                                        <span
-                                                            className={`${styles.badge} ${
-                                                                disc.tipo_disciplina === "OB"
-                                                                    ? styles.badgeOB
-                                                                    : styles.badgeOP
-                                                            }`}
-                                                        >
-                                                            {disc.tipo_disciplina}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {sem.disciplinas.map((disc, i) => {
+                                                const horarioLabel = formatarAulas(disc.aulas);
+                                                return (
+                                                    <tr
+                                                        key={disc.codigo || `op-${i}`}
+                                                        className={disc.codigo ? "" : styles.rowOptativa}
+                                                    >
+                                                        <td className={styles.tdCodigo}>
+                                                            {disc.codigo ?? "—"}
+                                                        </td>
+                                                        <td>{disc.nome}</td>
+                                                        <td>{disc.creditos ?? "—"}</td>
+                                                        <td className={styles.tdHorario}>
+                                                            {horarioLabel ?? "—"}
+                                                        </td>
+                                                        <td>
+                                                            <span
+                                                                className={`${styles.badge} ${
+                                                                    disc.tipo_disciplina === "OB"
+                                                                        ? styles.badgeOB
+                                                                        : styles.badgeOP
+                                                                }`}
+                                                            >
+                                                                {disc.tipo_disciplina}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
 

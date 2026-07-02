@@ -84,24 +84,86 @@
     color: var(--color-text-muted);
 }
 
-.checkboxGroup {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
+.formGroupFull {
+    grid-column: 1 / -1;
 }
 
-.checkboxLabel {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    font-size: var(--font-size-sm);
+/* ---------- grade de horários bloqueados ---------- */
+.scheduleWrapper {
+    overflow-x: auto;
+}
+
+.scheduleTable {
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+}
+
+.scheduleHoraTh {
+    padding: 2px 3px;
     color: var(--color-text-muted);
-    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    min-width: 30px;
 }
 
-.checkboxLabel input {
-    accent-color: var(--color-primary);
+.scheduleDia {
+    font-weight: 600;
+    color: var(--color-text);
+    padding-right: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    text-align: right;
+}
+
+.scheduleCell {
+    padding: 2px;
+    text-align: center;
+}
+
+.scheduleBtn {
+    width: 28px;
+    height: 22px;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background-color: var(--color-bg);
     cursor: pointer;
+    transition: background-color 0.12s, border-color 0.12s;
+    display: block;
+    margin: 0 auto;
+}
+
+.scheduleBtn:hover {
+    border-color: var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.scheduleBtnBlocked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.bloqueadosCount {
+    margin-left: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+.limparBtn {
+    margin-top: var(--spacing-xs);
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.fieldHint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-top: 2px;
 }
 
 .button {
@@ -144,7 +206,15 @@
 }
 
 .resumo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     font-size: var(--font-size-base);
+    color: var(--color-text-muted);
+}
+
+.resumoOpt {
+    font-size: var(--font-size-sm);
     color: var(--color-text-muted);
 }
 
@@ -246,6 +316,12 @@
     font-family: monospace;
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
+}
+
+.tdHorario {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
 }
 
 /* ---------- badges ---------- */

@@ -19,12 +19,14 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from app.database import SessionLocal, engine
 from app.models import Base, Disciplina, TipoDisciplina, Departamento, PeriodoOferta
 from app.models import prerequisitos as prereq_table
+from app.models import Aula, AulaDia, AulaHorario, DiaSemana, Horario
 
 
-SEED_DIR          = Path(__file__).parent / "seed"
-DISCIPLINAS_CSV   = SEED_DIR / "disciplinas.csv"
-PREREQS_CSV       = SEED_DIR / "prerequisitos.csv"
+SEED_DIR           = Path(__file__).parent / "seed"
+DISCIPLINAS_CSV    = SEED_DIR / "disciplinas.csv"
+PREREQS_CSV        = SEED_DIR / "prerequisitos.csv"
 PERIODO_OFERTA_CSV = SEED_DIR / "periodo_oferta.csv"
+AULAS_CSV          = SEED_DIR / "aulas.csv"
 
 
 def _tipo(valor: str) -> TipoDisciplina:
@@ -106,6 +108,56 @@ def seed_prerequisitos(session) -> int:
     return len(rows)
 
 
+def seed_aulas(session) -> int:
+    """
+    Insere horários reais por semestre (PAR/ÍMPAR) lidos do arquivo aulas.csv.
+
+    Deleta todas as aulas existentes antes de reinserir para garantir dados frescos.
+    Cada linha do CSV gera um objeto Aula com seus AulaDia e AulaHorario associados.
+    O valor 'AMBOS' em tipo_semestre é convertido para NULL no banco (aplica-se a
+    ambos os semestres). Dados extraídos das grades oficiais de oferta dos
+    departamentos DI, DMAT e DEE da UFES.
+
+    :param session: Sessão SQLAlchemy ativa.
+    :return: Número de Aulas inseridas.
+    :rtype: int
+    """
+    from sqlalchemy import delete as sa_delete
+    session.execute(sa_delete(AulaHorario))
+    session.execute(sa_delete(AulaDia))
+    session.execute(sa_delete(Aula))
+    session.flush()
+
+    total = 0
+    with open(AULAS_CSV, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    for row in rows:
+        codigo           = row["codigo"].strip()
+        tipo_semestre_raw = row["tipo_semestre"].strip()
+        dias_raw         = [d.strip() for d in row["dias"].strip().split(":")]
+        horarios_raw     = [h.strip() for h in row["horarios"].strip().split(":")]
+
+        disc = session.get(Disciplina, codigo)
+        if disc is None:
+            continue
+
+        tipo_semestre = None if tipo_semestre_raw == "AMBOS" else tipo_semestre_raw
+
+        aula = Aula(codigo_disciplina=codigo, tipo_semestre=tipo_semestre)
+        session.add(aula)
+        session.flush()
+
+        for dia_str in dias_raw:
+            session.add(AulaDia(aula_id=aula.id, dia_semana=DiaSemana(dia_str)))
+        for horario_str in horarios_raw:
+            session.add(AulaHorario(aula_id=aula.id, horario=Horario(horario_str)))
+        total += 1
+
+    session.commit()
+    return total
+
+
 def seed_periodo_oferta(session) -> int:
     """
     Atualiza o campo periodo_oferta de cada disciplina a partir do CSV.
@@ -144,10 +196,12 @@ def main():
         n_disc   = seed_disciplinas(session)
         n_prereq = seed_prerequisitos(session)
         n_oferta = seed_periodo_oferta(session)
+        n_aulas  = seed_aulas(session)
 
     print(f"{n_disc} disciplinas processadas.")
     print(f"{n_prereq} pre-requisitos processados.")
     print(f"{n_oferta} disciplinas com periodo_oferta atualizado.")
+    print(f"{n_aulas} aulas inseridas (horarios reais extraidos das grades DI/DMAT/DEE).")
 
 
 if __name__ == "__main__":
