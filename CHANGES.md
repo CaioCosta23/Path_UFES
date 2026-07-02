@@ -1,3 +1,28 @@
+# Mudanças — sessão 2026-07-02 (entrypoint automático)
+
+## Execução simplificada via Docker
+
+### `backend/entrypoint.sh` — NOVO
+- Script de inicialização do container backend
+- Aguarda o PostgreSQL aceitar conexões (loop com retry de 2s usando psycopg2)
+- Executa `alembic upgrade head` automaticamente
+- Executa `python scripts/seed_db.py` automaticamente
+- Inicia o FastAPI (`fastapi run app/main.py --port 8000`)
+- Resultado: `docker compose up --build` é suficiente para subir a aplicação do zero
+
+### `backend/Dockerfile` — modificado
+- Substituído `CMD` por `ENTRYPOINT ["./entrypoint.sh"]`
+- Adicionado `RUN chmod +x entrypoint.sh`
+
+### `docs/guias/CONTRIBUTING.md` e `CONTRIBUTING.md` — modificados
+- Seção "Configuração inicial" reescrita: passos 2-4 condensados em um único passo
+  (`docker compose up --build`) com descrição do que o entrypoint faz automaticamente
+- Adicionado bloco de desenvolvimento local (sem Docker) como nota opcional
+- Removido passo separado de `alembic upgrade head` e `seed_db.py` (agora automáticos)
+- Sincronizado `CONTRIBUTING.md` da raiz com `docs/guias/CONTRIBUTING.md`
+
+---
+
 # Mudanças — sessão 2026-07-02 (horários reais e tipo_semestre)
 
 ## Dados reais de horários por semestre
