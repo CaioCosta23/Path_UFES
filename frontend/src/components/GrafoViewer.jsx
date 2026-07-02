@@ -174,6 +174,16 @@ export default function GrafoViewer() {
             {/*Area do Grafo */}
             <div ref = {containerRef} className = {styles.container}/>
 
+            {/* Legenda de cores dos nós */}
+            <div className = {styles.info} style={{display: "flex", gap: "1.5rem", flexWrap: "wrap", fontSize: "0.8rem"}}>
+                <span><span style={{display:"inline-block", width:10, height:10, borderRadius:"50%", background:"#10b981", marginRight:4}}/>Cursada</span>
+                <span><span style={{display:"inline-block", width:10, height:10, borderRadius:"50%", background:"#4f46e5", marginRight:4}}/>Disponível</span>
+                <span><span style={{display:"inline-block", width:10, height:10, borderRadius:"50%", background:"#94a3b8", marginRight:4}}/>Bloqueada</span>
+                <span style={{color: "var(--color-text-muted)"}}>
+                    (carregue o grafo com sua matrícula para ver o status)
+                </span>
+            </div>
+
             {/*Painel de informações */}
             <div className = {styles.info}>
                 {erro && (
