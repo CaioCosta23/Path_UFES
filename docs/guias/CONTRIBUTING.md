@@ -24,49 +24,40 @@ git clone https://github.com/CaioCosta23/Path_UFES.git
 cd Path_UFES
 ```
 
-### 2. Suba o banco de dados
-
-O PostgreSQL roda em Docker. Você não precisa instalar o banco localmente.
+### 2. Suba a aplicação completa
 
 ```bash
-docker compose up -d db
+docker compose up --build
 ```
 
-O que esse comando faz: baixa a imagem `postgres:16`, cria o volume de dados e sobe o container na porta `5432`. O banco `pathufes` é criado automaticamente.
+O que esse comando faz: constrói as imagens do backend e do frontend, sobe o PostgreSQL e executa automaticamente (via `backend/entrypoint.sh`):
 
-Para verificar se está rodando:
+1. Aguarda o banco aceitar conexões
+2. `alembic upgrade head` — cria/atualiza todas as tabelas
+3. `python scripts/seed_db.py` — popula disciplinas, pré-requisitos e horários reais
+4. Inicia o FastAPI na porta `8000`
 
-```bash
-docker compose ps
-```
+O frontend fica disponível em `http://localhost:5173` e a API em `http://localhost:8000`.
 
-### 3. Configure o backend
+> Para desenvolvimento local do backend sem Docker, ainda é possível rodar o banco isolado e o backend no venv:
+>
+> ```bash
+> docker compose up -d db
+> cd backend
+> python3 -m venv venv
+> source venv/bin/activate
+> pip install -r requirements.txt
+> alembic upgrade head
+> python scripts/seed_db.py
+> fastapi dev app/main.py
+> ```
 
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate      # Linux/macOS
-# venv\Scripts\activate       # Windows
-pip install -r requirements.txt
-```
-
-### 4. Crie as tabelas no banco (migration)
-
-O Alembic versiona o schema do banco, igual o Git versiona o código. O arquivo de migration já existe em `backend/alembic/versions/`. Basta aplicar:
-
-```bash
-alembic upgrade head
-```
-
-O que esse comando faz: conecta no PostgreSQL e executa os SQLs de criação de todas as tabelas definidas nos models.
-
-> Se o banco estiver vazio e você rodar `alembic upgrade head`, todas as tabelas são criadas do zero. Se o banco já tiver tabelas de uma versão anterior, o Alembic aplica apenas o que ainda não foi aplicado.
-
-### 5. Configure o frontend
+### 3. (Opcional) Configure o frontend fora do Docker
 
 ```bash
-cd ../frontend
+cd frontend
 npm install
+npm run dev
 ```
 
 ---
