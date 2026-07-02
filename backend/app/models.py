@@ -162,6 +162,7 @@ class Aula(Base):
 
     id                = Column(Integer, primary_key=True, autoincrement=True)
     codigo_disciplina = Column(String, ForeignKey("disciplinas.codigo"), nullable=False)
+    tipo_semestre     = Column(String(6), nullable=True)
 
     disciplina = relationship("Disciplina", back_populates="aulas")
     dias       = relationship("AulaDia",     cascade="all, delete-orphan")

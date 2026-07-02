@@ -19,61 +19,53 @@ down_revision: Union[str, Sequence[str], None] = '0d78acc04dcc'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-# create_type=False: impede que op.create_table tente criar o tipo enum novamente;
-# o tipo é criado via IF NOT EXISTS no upgrade() abaixo.
-_diasemana = sa.Enum(
-    'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA',
-    name='diasemana',
-    create_type=False,
-)
-_horario = sa.Enum(
-    'H07_08', 'H08_09', 'H09_10', 'H10_11', 'H11_12', 'H12_13',
-    'H13_14', 'H14_15', 'H15_16', 'H16_17', 'H17_18', 'H18_19',
-    name='horario',
-    create_type=False,
-)
-
 
 def upgrade() -> None:
-    """Cria tabelas e tipos de enum para aulas."""
-    # IF NOT EXISTS evita DuplicateObject caso create_all já tenha criado os tipos.
-    op.execute(
-        "CREATE TYPE IF NOT EXISTS diasemana AS ENUM "
-        "('SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA')"
-    )
-    op.execute(
-        "CREATE TYPE IF NOT EXISTS horario AS ENUM "
-        "('H07_08', 'H08_09', 'H09_10', 'H10_11', 'H11_12', 'H12_13', "
-        "'H13_14', 'H14_15', 'H15_16', 'H16_17', 'H17_18', 'H18_19')"
-    )
-
-    op.create_table(
-        'aulas',
-        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('codigo_disciplina', sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(['codigo_disciplina'], ['disciplinas.codigo']),
-        sa.PrimaryKeyConstraint('id'),
-    )
-    op.create_table(
-        'aula_dias',
-        sa.Column('aula_id', sa.Integer(), nullable=False),
-        sa.Column('dia_semana', _diasemana, nullable=False),
-        sa.ForeignKeyConstraint(['aula_id'], ['aulas.id']),
-        sa.PrimaryKeyConstraint('aula_id', 'dia_semana'),
-    )
-    op.create_table(
-        'aula_horarios',
-        sa.Column('aula_id', sa.Integer(), nullable=False),
-        sa.Column('horario', _horario, nullable=False),
-        sa.ForeignKeyConstraint(['aula_id'], ['aulas.id']),
-        sa.PrimaryKeyConstraint('aula_id', 'horario'),
-    )
+    """Cria tabelas e tipos de enum para aulas via SQL puro."""
+    # SQL puro evita que SQLAlchemy tente recriar os tipos enum via eventos de tabela.
+    op.execute(sa.text("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'diasemana') THEN
+                CREATE TYPE diasemana AS ENUM ('SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA');
+            END IF;
+        END $$
+    """))
+    op.execute(sa.text("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'horario') THEN
+                CREATE TYPE horario AS ENUM (
+                    'H07_08', 'H08_09', 'H09_10', 'H10_11', 'H11_12', 'H12_13',
+                    'H13_14', 'H14_15', 'H15_16', 'H16_17', 'H17_18', 'H18_19'
+                );
+            END IF;
+        END $$
+    """))
+    op.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS aulas (
+            id               SERIAL      PRIMARY KEY,
+            codigo_disciplina VARCHAR     NOT NULL REFERENCES disciplinas(codigo)
+        )
+    """))
+    op.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS aula_dias (
+            aula_id    INTEGER    NOT NULL REFERENCES aulas(id),
+            dia_semana diasemana  NOT NULL,
+            PRIMARY KEY (aula_id, dia_semana)
+        )
+    """))
+    op.execute(sa.text("""
+        CREATE TABLE IF NOT EXISTS aula_horarios (
+            aula_id INTEGER  NOT NULL REFERENCES aulas(id),
+            horario horario  NOT NULL,
+            PRIMARY KEY (aula_id, horario)
+        )
+    """))
 
 
 def downgrade() -> None:
     """Remove tabelas e tipos de enum de aulas."""
-    op.drop_table('aula_horarios')
-    op.drop_table('aula_dias')
-    op.drop_table('aulas')
-    op.execute("DROP TYPE IF EXISTS horario")
-    op.execute("DROP TYPE IF EXISTS diasemana")
+    op.execute(sa.text("DROP TABLE IF EXISTS aula_horarios"))
+    op.execute(sa.text("DROP TABLE IF EXISTS aula_dias"))
+    op.execute(sa.text("DROP TABLE IF EXISTS aulas"))
+    op.execute(sa.text("DROP TYPE IF EXISTS horario"))
+    op.execute(sa.text("DROP TYPE IF EXISTS diasemana"))

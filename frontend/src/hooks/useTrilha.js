@@ -6,7 +6,7 @@ export function useTrilha() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState(null);
 
-    const gerarTrilha = async (matricula, semestre, maxDisc, diasBloqueados) => {
+    const gerarTrilha = async (matricula, semestre, maxDisc, horariosBloqueados) => {
         if (!matricula || !semestre) {
             setErro("Informe a matrícula e o semestre de início.");
             return;
@@ -15,7 +15,7 @@ export function useTrilha() {
         setErro(null);
         setTrilha(null);
         try {
-            const data = await fetchTrilha(matricula, semestre, maxDisc, diasBloqueados);
+            const data = await fetchTrilha(matricula, semestre, maxDisc, horariosBloqueados);
             setTrilha(data);
         } catch (err) {
             setErro(err.message);
