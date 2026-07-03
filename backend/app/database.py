@@ -12,7 +12,13 @@ Base = declarative_base()
 
 def get_db():
     """
-    Criação de Banco de Dados;
+    Gera uma sessão de banco de dados para injeção de dependência no FastAPI.
+
+    Abre uma sessão do SQLAlchemy, cede ao endpoint e a fecha ao término
+    da requisição, garantindo que conexões não fiquem abertas indefinidamente.
+
+    :return: Sessão SQLAlchemy ativa.
+    :rtype: Session
     """
     db = SessionLocal()
 
