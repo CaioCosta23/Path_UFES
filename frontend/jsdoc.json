@@ -5,6 +5,17 @@
         "excludePattern": "(node_modules|tests)"
     },
     "opts": {
-        "destination": "../docs/frontend/"
+        "destination": "../docs/frontend/", 
+        "recurse": true,
+        "template": "./node_modules/better-docs"
+    },
+    "plugins": [
+        "node_modules/better-docs/component"
+    ],
+    "templates": {
+        "better-docs": {
+            "name": "Path UFES Frontend",
+            "mavigation": true
+        }
     }
 }
