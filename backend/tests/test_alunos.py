@@ -548,3 +548,74 @@ def test_trilha_completa_9_optativas_apos_obrigatorias(client, db_session):
     ]
     opt_count = sum(1 for n in todos_nomes if n.startswith("Optativa"))
     assert opt_count == 9
+
+
+def test_trilha_sem_conflito_horario_entre_disciplinas(client, db_session):
+    """
+    Duas disciplinas com aula no mesmo dia e faixa de horário não devem
+    aparecer no mesmo semestre da trilha — a segunda deve ser postergada.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc A Segunda")
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Disc B Segunda")
+    db_session.commit()
+
+    # Ambas têm aula na SEGUNDA H08_09 — conflito direto
+    _inserir_aula(db_session, "INF00001", DiaSemana.SEGUNDA, Horario.H08_09)
+    _inserir_aula(db_session, "INF00002", DiaSemana.SEGUNDA, Horario.H08_09)
+    db_session.commit()
+
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    # max_disciplinas=2: cabem duas por semestre, mas conflito impede coexistência
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1&max_disciplinas=2"
+    )
+    assert resp.status_code == 200
+    semestres = resp.json()["semestres"]
+
+    codigos_sem1 = {d["codigo"] for d in semestres[0]["disciplinas"] if d["codigo"]}
+    codigos_sem2 = {d["codigo"] for d in semestres[1]["disciplinas"] if d["codigo"]}
+
+    # As duas NÃO podem coexistir no mesmo semestre
+    assert not ({"INF00001", "INF00002"} <= codigos_sem1)
+    # Uma fica no 1º semestre e a outra no 2º
+    assert len(codigos_sem1 & {"INF00001", "INF00002"}) == 1
+    assert len(codigos_sem2 & {"INF00001", "INF00002"}) == 1
+
+
+def test_trilha_historico_vazio_calouro(client, db_session):
+    """
+    Aluno sem nenhuma disciplina aprovada (recém-ingressante) deve receber
+    na trilha todas as disciplinas sem pré-requisito no 1º semestre,
+    disciplinas com pré-req apenas a partir do 2º, e optativas_faltantes == 9.
+    """
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Prog I",        periodo_sugerido=1)
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Calculo I",     periodo_sugerido=1)
+    _inserir_disciplina_com_oferta(db_session, "INF00003", "Prog Avancada", periodo_sugerido=2)
+    _inserir_prereq(db_session, "INF00003", "INF00001")
+    db_session.commit()
+
+    # Histórico vazio: PAYLOAD_BASE tem disciplinas=[]
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1&max_disciplinas=5"
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+
+    # Nenhuma optativa aprovada → ainda faltam todas as 9
+    assert data["optativas_faltantes"] == 9
+
+    semestres = data["semestres"]
+    codigos_sem1 = {d["codigo"] for d in semestres[0]["disciplinas"] if d["codigo"]}
+
+    # Disciplinas sem pré-requisito devem estar no 1º semestre
+    assert "INF00001" in codigos_sem1
+    assert "INF00002" in codigos_sem1
+    # Disciplina com pré-requisito não cumprido não pode estar no 1º semestre
+    assert "INF00003" not in codigos_sem1
+
+    # INF00003 aparece no 2º semestre, quando INF00001 já foi agendada
+    codigos_sem2 = {d["codigo"] for d in semestres[1]["disciplinas"] if d["codigo"]}
+    assert "INF00003" in codigos_sem2

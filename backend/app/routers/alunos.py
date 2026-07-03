@@ -359,6 +359,35 @@ def _tem_conflito_horario(
     return False
 
 
+def _aulas_conflitam_entre_si(disc1, disc2, tipo: str) -> bool:
+    """
+    Verifica se duas disciplinas têm aulas com conflito de horário em um mesmo semestre.
+
+    Há conflito quando existe pelo menos um par de aulas (uma de cada disciplina,
+    ambas válidas para ``tipo``) que ocorre no mesmo dia **e** na mesma faixa de horário.
+
+    :param disc1: Primeira disciplina.
+    :type disc1: Disciplina
+    :param disc2: Segunda disciplina.
+    :type disc2: Disciplina
+    :param tipo: Tipo do semestre ('IMPAR' ou 'PAR').
+    :type tipo: str
+    :return: True se houver conflito de horário entre as duas disciplinas.
+    :rtype: bool
+    """
+    aulas1 = [a for a in disc1.aulas if a.tipo_semestre is None or a.tipo_semestre == tipo]
+    aulas2 = [a for a in disc2.aulas if a.tipo_semestre is None or a.tipo_semestre == tipo]
+    for a1 in aulas1:
+        dias1 = {d.dia_semana.value for d in a1.dias}
+        hors1 = {h.horario.value for h in a1.horarios}
+        for a2 in aulas2:
+            dias2 = {d.dia_semana.value for d in a2.dias}
+            hors2 = {h.horario.value for h in a2.horarios}
+            if dias1 & dias2 and hors1 & hors2:
+                return True
+    return False
+
+
 def _proximo_semestre(semestre: str) -> str:
     """
     Retorna o semestre imediatamente seguinte.
@@ -619,7 +648,14 @@ def get_trilha(
             )
         )
 
-        escolhidas = prontas[:max_disciplinas]
+        # Seleção greedy: respeita prioridade do caminho crítico e evita
+        # conflitos de horário entre disciplinas do mesmo semestre.
+        escolhidas: list = []
+        for d in prontas:
+            if len(escolhidas) >= max_disciplinas:
+                break
+            if not any(_aulas_conflitam_entre_si(d, j, tipo) for j in escolhidas):
+                escolhidas.append(d)
 
         # Semestre sem obrigatórias disponíveis: avança (bloqueio de PAR/ÍMPAR)
         if not escolhidas:
