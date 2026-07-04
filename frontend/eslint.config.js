@@ -1,3 +1,8 @@
+/**
+ * Arquivo de definição para analise de código eoutris componentes
+ * (analisa potenciais erros que podem afetar o código, seja de forma implícita ou explícita);
+ */
+
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
