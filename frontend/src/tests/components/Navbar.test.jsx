@@ -3,7 +3,7 @@ import {render, screen, fireEvent} from "@testing-library/react";
 import {MemoryRouter} from "react-router-dom";
 import Navbar from "../../components/Navbar";
 
-const renderNavBar = () =>
+const renderNavbar = () =>
     render(
         <MemoryRouter>
             <Navbar/>
@@ -12,12 +12,12 @@ const renderNavBar = () =>
 
 describe("Navbar", () => {
     it("deve renderizar o logo", () => {
-        renderNavBar();
+        renderNavbar();
         expect(screen.getByText("MyApp")).toBeInDocument();
     });
 
     it("deve renderizar os links de navegação", () => {
-        renderNavBar();
+        renderNavbar();
         expect(screen.getByText("Home")).toBeInDocument();
         expect(screen.getByText("Grafo")).toBeInDocument();
         expect(screen.getByText("Trilha")).toBeInDocument();
@@ -25,26 +25,43 @@ describe("Navbar", () => {
     });
 
     it("deve renderizar o botão de tema", () => {
-        renderNavBar();
+        renderNavbar();
         expect(screen.getByText("Alternar Tema")).toBeInDocument();
     });
 
-    it("deve abrir o menu mobile ao clicar no hambúrguer", () => {
-        renderNavBar();
-
+    it ("deve alternar o ícone do tema ao clicar", () => {
+        renderNavbar();
         const botaoTema = screen.getByLabelText("Alternar tema");
 
-        // Ainda é necessário rever esse trecho de código!
-        expect(botaoTema.textContent).toBe("moon");
-        fireEvent.click(botaoHamburguer);
-        expect(botaoTema.textContent).toBe("sun");
-    });
-    
-    it("deve abrir o menu mobile ao clicar no hambúrguer", () => {
-        renderNavBar();
+        fireEvent.click(botaoTema);
 
-        const botaoHamburguer = screen.getByLabelText("Barir menu");
+        // Sujeito a alterção do emoji;
+        expect(botaoTema.textContent).toBe("sun")
+    })
+
+    it("deve abrir o menu mobile ao clicar no hambúrguer", () => {
+        renderNavbar();
+
+        const botaoHamburguer = screen.getByLabelText("Abrir menu");
+
         fireEvent.click(botaoHamburguer);
+
+        // Suejeito a alteração pelo emjoji do "X"
         expect(botaoHamburguer.textContent).toBe("X");
     });
-})
+   
+    it ("deve mostrar link Trilha no menu mobile", () => {
+        renderNavbar();
+
+        const botaoHamburguer = screen.getByLabelText("Abrir menu");
+
+        fireEvent.click(botaoHamburguer);
+
+        const linksTrilha = screen.getAllByText("Trilha");
+        fireEvent.click(linksTrilha[0]);
+
+        //sujeito a alteração por causa do emoji;
+        expect(botaoHamburguer.textContent).toBe("=")
+    })
+    
+});
