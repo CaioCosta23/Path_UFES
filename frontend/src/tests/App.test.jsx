@@ -15,6 +15,10 @@ vi.mock("./componets/Grafo", () => ({
     default: () => <div data testid = "grafo" >Grafo</div>,
 }));
 
+vi.mock("./componets/Trilha", () => ({
+    default: () => <div data testid = "about" >About</div>,
+}));
+
 vi.mock("./componets/About", () => ({
     default: () => <div data testid = "about" >About</div>,
 }));
@@ -45,6 +49,15 @@ describe("App", () => {
             </MemoryRouter>
         );
         expect(screen.getByTestId("grafo")).toBeInTheDocument();
+    });
+
+    it("deve renderizar a página Trilha na rota /grafo", () => {
+        render(
+            <MemoryRouter initialEntries = {["/trilha"]}>
+                <App/>
+            </MemoryRouter>
+        );
+        expect(screen.getByTestId("trilha")).toBeInTheDocument();
     });
 
     it("deve renderizar a página About na rota /about", () => {
