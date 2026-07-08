@@ -1,5 +1,5 @@
 :root {
-    --color-bg: #f5f7fa;
+    --color-bg: transparent;
     --color-surface: #ffffff;
     --color-border: #e2e8f0;
 
@@ -46,7 +46,7 @@
 }
 
 [data-theme="dark"] {
-    --color-bg: #0f172a;
+    --color-bg: transparent;
     --color-surface: #1e293b;
     --color-border: #334155;
 
