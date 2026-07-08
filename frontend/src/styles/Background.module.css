@@ -5,7 +5,7 @@
     height: 100%;
     z-index: -1;
     pointer-events: none;
-    opacity: 0.15;
+    opacity: 0.4;
 }
 
 .no {
@@ -16,7 +16,7 @@
 }
 
 .aresta {
-    stroke: #94a3b8;
+    stroke: #4034eb;
     stroke-width: 1.5;
     stroke-dasharray: 6 6;
     animation: fluxo 3s linear infinite;
