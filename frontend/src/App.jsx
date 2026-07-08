@@ -3,6 +3,7 @@
  *  páginas em si da aplicação, componentes das páginas e os estilos;
  */
 import {BrowserRouter, Routes, Route} from "react-router-dom";
+import Background from "./components/Background";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Grafo from "./pages/Grafo";
@@ -20,6 +21,8 @@ export default function App() {
   return (
     <BrowserRouter>
     {/* Renderiza a barra de navegação (se mantendo em todas elas, por não estat alocado dentro de nenhuma rota específica) */}
+      <Background/>
+      {/*Renderiza o fundo da aplicação*/}
       <Navbar/>
       {/* Seleciona as rotas das páginas de acordo com o seu "endereço". */}
       <main>
