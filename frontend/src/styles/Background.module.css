@@ -1,0 +1,40 @@
+.fundo {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.15;
+}
+
+.no {
+    fill: #4f46e5;
+    animation: pulsar 4s ease-in-out infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+}
+
+.aresta {
+    stroke: #94a3b8;
+    stroke-width: 1.5;
+    stroke-dasharray: 6 6;
+    animation: fluxo 3s linear infinite;
+}
+
+@keyframes pulsar {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.6);
+        opacity: 1;
+    }
+}
+
+@keyframes fluxo {
+    to {
+        stroke-dashoffset: -60;
+    }
+}
