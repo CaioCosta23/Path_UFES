@@ -21,6 +21,10 @@ const ARESTAS = [
     ["n10","n11"], ["n8","n11"], ["n7","n12"], ["n11","n12"], ["n2","n6"],
 ];
 
+function getNo(id) {
+    return NOS.find((n) => n.id === id);
+}
+
 export default function Background() {
     return (
         <svg className = {styles.fundo} viewbox = "0 0 1200 700" preserveASpectRatio = "xMidYMid slice" aria-hidden = "true">
