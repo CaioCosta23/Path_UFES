@@ -1,3 +1,4 @@
+/*
 import { useState, useEffect } from "react";
 
 export function useTheme() {
@@ -10,4 +11,6 @@ export function useTheme() {
     const toggleTheme = () =>
         setTheme((prev) => (prev === "light" ? "dark" : "light"));
     return {theme, toggleTheme}
-}
+}*/
+
+export {useTheme} from "../contexts/ThemeContext";

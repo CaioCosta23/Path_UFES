@@ -1,62 +1,126 @@
-import styles from "../styles/Background.module.css";
+import {useEffect, useRef} from "react";
 
-const NOS = [
-    {id: "n1", cx: 120, cy: 140},
-    {id: "n2", cx: 320, cy: 90},
-    {id: "n3", cx: 520, cy: 180},
-    {id: "n4", cx: 200, cy: 320},
-    {id: "n5", cx: 420, cy: 350},
-    {id: "n6", cx: 680, cy: 260},
-    {id: "n7", cx: 850, cy: 120},
-    {id: "n8", cx: 950, cy: 340},
-    {id: "n9", cx: 300, cy: 520},
-    {id: "n10", cx: 600, cy: 550},
-    {id: "n11", cx: 800, cy: 480},
-    {id: "n12", cx: 1050, cy: 200},
-];
+export default function Background({
+    theme = "dark",
+    nodeCount = 60,
+    maxDistance = 140,
+    speed = 0.3,
+}) {
+    const canvasRef = useRef(null);
+    const nodesRef = useRef([]);
+    const animationRef = useRef(null);
+    const themeRef = useRef(theme);
 
-const ARESTAS = [
-    ["n1","n2"], ["n2","n3"], ["n1","n4"], ["n4","n5"], ["n3","n6"],
-    ["n5","n6"], ["n6","n7"], ["n7","n8"], ["n4","n9"], ["n5","n10"],
-    ["n10","n11"], ["n8","n11"], ["n7","n12"], ["n11","n12"], ["n2","n6"],
-];
+    useEffect(() => {
+        themeRef.current = theme;
+    }, [theme]);
 
-function getNo(id) {
-    return NOS.find((n) => n.id === id);
-}
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
 
-export default function Background() {
+        const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+
+        resize();
+        window.addEventListener("resize", resize);
+
+        nodesRef.current = Array.from({length: nodeCount}, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * speed,
+            vy: (Math.random() - 0.5) * speed,
+            radius: Math.random() * 1.5 + 1,
+        }));
+
+        const palettes = {
+            dark: {
+                background: "rgba(5, 5, 8, 1)",
+                node: "rgba(255, 255, 255, 0.9)",
+                nodeGlow: "rgba(255, 255, 255, 0.5)",
+                line: "rgba(255, 255, 255, 0.15)",
+            },
+            light: {
+                background: "rgba(245, 246, 248, 1)",
+                node: "rgba(30, 30, 40, 0.85)",
+                nodeGlow: "rgba(30 30, 40, 0.3)",
+                line: "rgba(30, 30, 40, 0.12)",
+            },
+        };
+
+        const draw = () => {
+            const palette = palettes[themeRef.current] || palettes.dark;
+            const nodes = nodesRef.current;
+
+            ctx.fillStyle = palette.background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (const node of nodes) {
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                if ((node.x <= 0) || (node.x >= canvas.width)) {
+                    node.vx *= -1;
+                }
+                if ((node.y <= 0) || (node.y >= canvas.height)) {
+                    node.vy *= -1;
+                }
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = (i + 1); j < nodes.length; j++) {
+                    const a = nodes[i];
+                    const b = nodes[j];
+                    const dx = a.x - b.x;
+                    const dy = a.y - b.y;
+                    const distance = Math.sqrt((dx * dx) + (dy * dy));
+
+                    if (distance < maxDistance) {
+                        const opacity = 1 - distance / maxDistance;
+
+                        ctx.strokeStyle = palette.line.replace(/[\d.] + \)$/, `${opacity * 0.3})`);
+
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(a.x, a.y);
+                        ctx.lineTo(b.x, b.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            for (const node of nodes) {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, (Math.PI * 2));
+                ctx.fillStyle = palette.node;
+                ctx.fill();
+            }
+
+            animationRef.current = requestAnimationFrame(draw);
+        };
+
+        draw();
+
+        return () => {
+            window.removeEventListener("resize", resize);
+            cancelAnimationFrame(animationRef.current);
+        };
+
+    }, [nodeCount, maxDistance, speed]);
+
     return (
-        <svg className = {styles.fundo} viewbox = "0 0 1200 700" preserveASpectRatio = "xMidYMid slice" aria-hidden = "true">
-            {ARESTAS.map(([origem, destino], i) => {
-                const a = getNo(origem);
-                const b = getNo(destino);
-
-                return (
-                    <line
-                        key = {`${origem}-${destino}`}
-                        x1 = {a.cx}
-                        y1 = {a.cy}
-                        x2 = {b.cx}
-                        y2 = {b.cy}
-
-                        className = {styles.aresta}
-                        style = {{animationDelay: `${i * 0.15}s`}}
-                    />
-                );
-            })}
-            
-            {NOS.map((no, i) => {
-                <circle
-                    key = {no.id}
-                    cx = {no.cx}
-                    cy = {no.cy}
-                    r = {10}
-
-                    className = {styles.no}
-                    style = {{animationDelay: `${i * 0.3}s`}}
-                />
-            })}
-        </svg>
+        <canvas
+            ref = {canvasRef}
+            style = {{
+                position: "fixed",
+                inset: 0,
+                zIndex: -1,
+                width: "100%",
+                height: "100%",
+                display: "block",
+            }}
+        />
     );
 }
