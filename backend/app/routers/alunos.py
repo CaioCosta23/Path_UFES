@@ -610,6 +610,15 @@ def get_trilha(
     # Cada iteração adiciona as escolhidas, desbloqueando novos pré-requisitos.
     cumpridas = set(aprovadas)
 
+    # Horas cursadas: soma das cargas horárias das disciplinas já aprovadas.
+    # Atualizada a cada semestre agendado para verificar o requisito de min_horas.
+    todas_map = {d.codigo: d for d in todas}
+    horas_cumpridas = sum(
+        todas_map[c].carga_horaria
+        for c in aprovadas
+        if c in todas_map
+    )
+
     semestres: list[SemestreTrilha] = []
     semestre_atual = semestre_inicio
     MAX_SEMESTRES = 20
@@ -629,12 +638,14 @@ def get_trilha(
                 requer_map[prereq.codigo].add(d.codigo)
         memo: dict = {}
 
-        # Disciplinas prontas: pré-req cumpridos, período compatível, sem conflito de horário
+        # Disciplinas prontas: pré-req cumpridos, período compatível, sem conflito de horário,
+        # e mínimo de horas cursadas atingido (quando exigido, ex: TCC I requer 2000h).
         prontas = [
             d for d in pendentes
             if all(p.codigo in cumpridas for p in d.pre_requisitos)
             and _compativel(d.periodo_oferta, tipo)
             and not _tem_conflito_horario(d, horarios_bloqueados, semestre_atual)
+            and (d.min_horas is None or horas_cumpridas >= d.min_horas)
         ]
 
         # Ordena pelo caminho crítico em calendário (descendente).
@@ -719,6 +730,7 @@ def get_trilha(
         for d in escolhidas:
             cumpridas.add(d.codigo)
             pendentes.remove(d)
+            horas_cumpridas += d.carga_horaria
 
         semestre_atual = _proximo_semestre(semestre_atual)
 

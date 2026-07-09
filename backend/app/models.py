@@ -134,6 +134,7 @@ class Disciplina(Base):
     departamento     = Column(Enum(Departamento), nullable=False)
     periodo_sugerido = Column(Integer, nullable=True)   # semestre sugerido (1–10)
     periodo_oferta   = Column(Enum(PeriodoOferta), nullable=True)  # PAR/IMPAR/AMBOS
+    min_horas        = Column(Integer, nullable=True)   # mínimo de horas cursadas no currículo
 
     pre_requisitos = relationship(
         "Disciplina",
