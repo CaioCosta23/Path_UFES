@@ -706,6 +706,9 @@ def get_trilha(
                     aulas=[],
                 )
             )
+        # Optativas somam horas estimadas (60h cada) para desbloquear disciplinas
+        # com requisito de min_horas, como o TCC I.
+        horas_cumpridas += slots_op * 60
 
         # Optativas prováveis: pré-requisitos cumpridos E período compatível
         optativas_previstas: list[OptativaPrevista] = sorted(

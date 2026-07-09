@@ -70,7 +70,7 @@ def seed_disciplinas(session) -> int:
         rows = list(csv.DictReader(f))
 
     for row in rows:
-        min_horas_raw = row.get("min_horas", "").strip()
+        min_horas_raw = (row.get("min_horas") or "").strip()
         stmt = pg_insert(Disciplina).values(
             codigo          = row["codigo"].strip(),
             nome            = row["nome"].strip(),
@@ -80,7 +80,10 @@ def seed_disciplinas(session) -> int:
             departamento    = _dept(row["departamento"]),
             periodo_sugerido= int(row["periodo_sugerido"]) if row.get("periodo_sugerido", "").strip().isdigit() else None,
             min_horas       = int(min_horas_raw) if min_horas_raw.isdigit() else None,
-        ).on_conflict_do_nothing(index_elements=["codigo"])
+        ).on_conflict_do_update(
+            index_elements=["codigo"],
+            set_={"min_horas": int(min_horas_raw) if min_horas_raw.isdigit() else None},
+        )
         session.execute(stmt)
 
     session.commit()
