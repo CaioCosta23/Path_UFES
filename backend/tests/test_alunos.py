@@ -123,6 +123,38 @@ def _inserir_disciplina_com_oferta(
     db.execute(insert(Disciplina).values(values))
 
 
+def _inserir_disciplina_com_min_horas(
+    db,
+    codigo: str,
+    nome: str,
+    min_horas: int,
+    carga_horaria: int = 60,
+):
+    """
+    Insere disciplina obrigatória com requisito de horas mínimas cursadas.
+
+    :param db: Sessão do banco de teste.
+    :param codigo: Código da disciplina.
+    :type codigo: str
+    :param nome: Nome da disciplina.
+    :type nome: str
+    :param min_horas: Mínimo de horas cursadas no currículo para poder cursar.
+    :type min_horas: int
+    :param carga_horaria: Carga horária da própria disciplina.
+    :type carga_horaria: int
+    """
+    db.execute(insert(Disciplina).values({
+        "codigo":           codigo,
+        "nome":             nome,
+        "creditos":         4,
+        "carga_horaria":    carga_horaria,
+        "tipo_disciplina":  TipoDisciplina.OBRIGATORIA,
+        "departamento":     Departamento.DI,
+        "periodo_sugerido": 9,
+        "min_horas":        min_horas,
+    }))
+
+
 # ---------------------------------------------------------------------------
 # Helpers para mock de PDF
 # ---------------------------------------------------------------------------
@@ -619,3 +651,39 @@ def test_trilha_historico_vazio_calouro(client, db_session):
     # INF00003 aparece no 2º semestre, quando INF00001 já foi agendada
     codigos_sem2 = {d["codigo"] for d in semestres[1]["disciplinas"] if d["codigo"]}
     assert "INF00003" in codigos_sem2
+
+
+def test_trilha_respeita_min_horas(client, db_session):
+    """
+    Disciplina com min_horas=120 não deve aparecer na trilha enquanto o
+    aluno não tiver acumulado ao menos 120 horas cursadas (aprovadas + agendadas).
+    Duas disciplinas de 60h cada devem ser agendadas antes dela.
+    """
+    # Duas disciplinas sem requisitos, 60h cada
+    _inserir_disciplina_com_oferta(db_session, "INF00001", "Base A")
+    _inserir_disciplina_com_oferta(db_session, "INF00002", "Base B")
+    # TCC: exige 120h cursadas (soma das duas anteriores)
+    _inserir_disciplina_com_min_horas(db_session, "INF00099", "TCC I", min_horas=120)
+    db_session.commit()
+
+    # Histórico vazio — nenhuma hora acumulada ainda
+    client.post("/aluno/historico", json=PAYLOAD_BASE)
+
+    resp = client.get(
+        f"/aluno/{MATRICULA}/trilha?semestre_inicio=2026/1&max_disciplinas=1"
+    )
+    assert resp.status_code == 200
+    semestres = resp.json()["semestres"]
+
+    # Com max_disciplinas=1, sem 1 = Base A (60h), sem 2 = Base B (60h acumuladas = 120h)
+    codigos_por_semestre = [
+        {d["codigo"] for d in s["disciplinas"] if d["codigo"]}
+        for s in semestres
+    ]
+
+    # TCC não pode estar no 1º semestre (0h acumuladas < 120h)
+    assert "INF00099" not in codigos_por_semestre[0]
+    # TCC não pode estar no 2º semestre (60h acumuladas < 120h)
+    assert "INF00099" not in codigos_por_semestre[1]
+    # TCC deve aparecer no 3º semestre (120h acumuladas >= 120h)
+    assert "INF00099" in codigos_por_semestre[2]

@@ -1,4 +1,4 @@
-codigo,nome,creditos,chs,tipo,periodo_sugerido,departamento
+codigo,nome,creditos,chs,tipo,periodo_sugerido,departamento,min_horas
 INF15927,PROGRAMAÇÃO I,3,60,OB,1,DI
 INF16150,Aspectos Teóricos da Computação,4,60,OB,1,DI
 INF16151,Introdução à Ciência da Computação,3,60,OB,1,DI
@@ -83,5 +83,5 @@ INF17420,Tópicos em Sistemas de Informação,4,60,OP,*,DI
 INF17421,Tópicos em Engenharia de Software,4,60,OP,*,DI
 LET16015,FUNDAMENTOS DA LÍNGUA BRASILEIRA DE SINAIS,4,60,OP,*,OUTRO
 INF16186,Estágio Supervisionado,6,200,EC,*,DI
-INF16187,Trabalho de Conclusão de Curso I,5,120,OB,9,DI
+INF16187,Trabalho de Conclusão de Curso I,5,120,OB,9,DI,2000
 INF16188,Trabalho de Conclusão de Curso II,5,120,OB,10,DI
