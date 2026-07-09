@@ -84,7 +84,7 @@ export function useGrafo() {
                     },
                 },
             ],
-            layout: {name: "cose"},
+            layout: {name: "cose", fit: true, padding: 30},
         });
 
         cyRef.current.on("select", "node, edge", (event) => {
@@ -93,6 +93,36 @@ export function useGrafo() {
 
         cyRef.current.on("unselect", () => {
             setElementoSelecionado(null);
+        });
+
+        // Impede que o grafo seja arrastado para fora da área visível:
+        // sempre mantém uma faixa da área dos nós dentro do container.
+        const PAN_PADDING = 60;
+        cyRef.current.on("pan", () => {
+            const cy = cyRef.current;
+            const elementos = cy.elements();
+            if (elementos.length === 0)
+                return;
+
+            const bb = elementos.boundingBox();
+            const zoom = cy.zoom();
+            const pan = cy.pan();
+            const largura = cy.width();
+            const altura = cy.height();
+
+            const x1 = bb.x1 * zoom + pan.x;
+            const x2 = bb.x2 * zoom + pan.x;
+            const y1 = bb.y1 * zoom + pan.y;
+            const y2 = bb.y2 * zoom + pan.y;
+
+            let dx = 0, dy = 0;
+            if (x2 < PAN_PADDING) dx = PAN_PADDING - x2;
+            if (x1 > largura - PAN_PADDING) dx = (largura - PAN_PADDING) - x1;
+            if (y2 < PAN_PADDING) dy = PAN_PADDING - y2;
+            if (y1 > altura - PAN_PADDING) dy = (altura - PAN_PADDING) - y1;
+
+            if (dx !== 0 || dy !== 0)
+                cy.pan({x: pan.x + dx, y: pan.y + dy});
         });
 
         return () => cyRef.current?.destroy();
@@ -130,7 +160,7 @@ export function useGrafo() {
             return;
         cyRef.current.elements().remove();
         cyRef.current.add(elementos);
-        cyRef.current.layout({name: "cose"}).run();
+        cyRef.current.layout({name: "cose", fit: true, padding: 30}).run();
         setNos(elementos.filter((el) => !el.data.source));
         setArestas(elementos.filter((el) => el.data.source));
     };
