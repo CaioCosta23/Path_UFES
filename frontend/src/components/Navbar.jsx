@@ -30,71 +30,73 @@ export default function Navbar() {
      */
     return (
         <nav className = {styles.navbar}>
-            {/* Logo*/}
-            <Link to = "/" className = {styles.logo}>
-                Path UFES
-            </Link>
+            <div className = {styles.navbarContent}>
+                {/* Logo*/}
+                <Link to = "/" className = {styles.logo}>
+                    Path UFES
+                </Link>
 
-            {/**
-             *  Links "desktop":
-             * Transforma uma lista (conjunto) de objetos em
-             * itens reenderizáveis que contém informações
-             * únicas de cada objeto e seus estado; 
-             */}
-            <ul className = {styles.links}>
-                {links.map(({to, label}) => (
-                <li key = {to}>
-                    <NavLink
-                        to = {to}
-                        className = {({isActive}) =>
-                            isActive ? styles.active : styles.link
-                        }
-                    >
-                        {label}
-                    </NavLink>
-                </li>
-            ))}
-            </ul>
-
-            {/**
-             *  "Toggle" de tema :
-             * Cria um botão indicando a mudança de tema (quando o mesmo é clicado);
-            */}
-            <button
-                className = {styles.themeToggle}
-                onClick = {toggleTheme}
-                aria-label = "Alternar tema"
-            >
-                {theme === "light" ? <Moon size = {18}/>  : <Sun size = {18}/>}
-            </button>
-
-            {/* Botão hambúrguer (mobile) */}
-            <button
-                className = {styles.hamburguer}
-                onClick = {() => setIsOpen(!isOpen)}
-                aria-label = "Abrir menu"
-            >
-                {isOpen ? "✕" : "☰"}
-            </button>
-
-            {/* Menu mobile */}
-            {isOpen && (
-                <ul className = { styles.mobileMenu}>
+                {/**
+                 *  Links "desktop":
+                 * Transforma uma lista (conjunto) de objetos em
+                 * itens reenderizáveis que contém informações
+                 * únicas de cada objeto e seus estado;
+                 */}
+                <ul className = {styles.links}>
                     {links.map(({to, label}) => (
-                        <li key = {to}>
-                            <NavLink
-                                to = {to}
-                                onClick = {() => setIsOpen(false)}
-                                className = {({isActive}) =>
-                                    isActive ? styles.active : styles.link
-                                }
-                            >
-                                {label}
-                            </NavLink>
-                        </li>
-                    ))}
+                    <li key = {to}>
+                        <NavLink
+                            to = {to}
+                            className = {({isActive}) =>
+                                isActive ? styles.active : styles.link
+                            }
+                        >
+                            {label}
+                        </NavLink>
+                    </li>
+                ))}
                 </ul>
-            )}
+
+                {/**
+                 *  "Toggle" de tema :
+                 * Cria um botão indicando a mudança de tema (quando o mesmo é clicado);
+                */}
+                <button
+                    className = {styles.themeToggle}
+                    onClick = {toggleTheme}
+                    aria-label = "Alternar tema"
+                >
+                    {theme === "light" ? <Moon size = {18}/>  : <Sun size = {18}/>}
+                </button>
+
+                {/* Botão hambúrguer (mobile) */}
+                <button
+                    className = {styles.hamburguer}
+                    onClick = {() => setIsOpen(!isOpen)}
+                    aria-label = "Abrir menu"
+                >
+                    {isOpen ? "✕" : "☰"}
+                </button>
+
+                {/* Menu mobile */}
+                {isOpen && (
+                    <ul className = { styles.mobileMenu}>
+                        {links.map(({to, label}) => (
+                            <li key = {to}>
+                                <NavLink
+                                    to = {to}
+                                    onClick = {() => setIsOpen(false)}
+                                    className = {({isActive}) =>
+                                        isActive ? styles.active : styles.link
+                                    }
+                                >
+                                    {label}
+                                </NavLink>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
         </nav>
     );
 }

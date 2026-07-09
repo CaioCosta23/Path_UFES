@@ -23,6 +23,9 @@ a:hover {
 }
 
 main {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
     padding: var(--spacing-lg);
     min-height: calc(100vh - 64px);
     position: relative;
