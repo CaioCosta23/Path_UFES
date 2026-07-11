@@ -32,6 +32,7 @@ def _inserir_disciplina(db, codigo: str, nome: str, periodo: int = 1):
     Insere uma disciplina obrigatória mínima no banco de teste.
 
     :param db: Sessão do banco de teste.
+    :type db: Session
     :param codigo: Código da disciplina.
     :type codigo: str
     :param nome: Nome da disciplina.
@@ -55,6 +56,7 @@ def _inserir_aula(db, codigo_disciplina: str, dia: DiaSemana, horario: Horario) 
     Insere uma Aula com um dia e horário específicos no banco de teste.
 
     :param db: Sessão do banco de teste.
+    :type db: Session
     :param codigo_disciplina: Código da disciplina dona da aula.
     :type codigo_disciplina: str
     :param dia: Dia da semana em que a aula ocorre.
@@ -74,6 +76,7 @@ def _inserir_prereq(db, disciplina: str, prereq: str):
     Insere uma relação de pré-requisito no banco de teste.
 
     :param db: Sessão do banco de teste.
+    :type db: Session
     :param disciplina: Código da disciplina que exige o pré-requisito.
     :type disciplina: str
     :param prereq: Código da disciplina exigida como pré-requisito.
@@ -98,6 +101,7 @@ def _inserir_disciplina_com_oferta(
     Insere disciplina com periodo_oferta definido para testes de trilha.
 
     :param db: Sessão do banco de teste.
+    :type db: Session
     :param codigo: Código da disciplina.
     :type codigo: str
     :param nome: Nome da disciplina.
@@ -134,6 +138,7 @@ def _inserir_disciplina_com_min_horas(
     Insere disciplina obrigatória com requisito de horas mínimas cursadas.
 
     :param db: Sessão do banco de teste.
+    :type db: Session
     :param codigo: Código da disciplina.
     :type codigo: str
     :param nome: Nome da disciplina.
@@ -534,6 +539,10 @@ def test_trilha_restricao_horario_por_semestre_especifico(client, db_session):
     """
     Restrição no formato SEMESTRE:DIA:HORARIO exclui a disciplina APENAS naquele
     semestre e a libera nos seguintes. Restrição em 2026/1 → disciplina migra para 2026/2.
+
+    Com o fix do deadlock, quando não há obrigatórias disponíveis em 2026/1 mas
+    ainda há optativas a agendar, o semestre 2026/1 é criado com placeholders
+    de optativas. INF00001 deve aparecer em 2026/2 e nunca em 2026/1.
     """
     _inserir_disciplina_com_oferta(db_session, "INF00001", "Disc Segunda")
     db_session.commit()
@@ -549,13 +558,21 @@ def test_trilha_restricao_horario_por_semestre_especifico(client, db_session):
     assert resp.status_code == 200
     semestres = resp.json()["semestres"]
 
-    # 2026/1 não tem prontas → algoritmo avança para 2026/2
-    # len(semestres) pode ser >1 por placeholders de optativas adicionados pelo pós-loop
-    assert semestres[0]["semestre"] == "2026/2"
-    codigos_sem1 = [d["codigo"] for d in semestres[0]["disciplinas"]]
-    assert "INF00001" in codigos_sem1
-    todos_semestres = [s["semestre"] for s in semestres]
-    assert "2026/1" not in todos_semestres
+    # INF00001 não pode estar em nenhum semestre 2026/1 (bloqueado por horário)
+    codigos_2026_1 = [
+        d["codigo"]
+        for s in semestres if s["semestre"] == "2026/1"
+        for d in s["disciplinas"]
+    ]
+    assert "INF00001" not in codigos_2026_1
+
+    # INF00001 deve aparecer em 2026/2, quando a restrição não se aplica mais
+    codigos_2026_2 = [
+        d["codigo"]
+        for s in semestres if s["semestre"] == "2026/2"
+        for d in s["disciplinas"]
+    ]
+    assert "INF00001" in codigos_2026_2
 
 
 def test_trilha_completa_9_optativas_apos_obrigatorias(client, db_session):

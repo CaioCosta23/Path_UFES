@@ -171,12 +171,12 @@ def upload_historico_pdf(
         ],
     )
 
-    salvar_historico(payload, db)
+    resultado = salvar_historico(payload, db)
 
     return UploadPdfResponse(
         matricula              = payload.matricula,
         nome                   = payload.nome,
-        disciplinas_importadas = len(disciplinas),
+        disciplinas_importadas = resultado.disciplinas_salvas,
     )
 
 
@@ -229,6 +229,7 @@ def salvar_historico(payload: HistoricoInput, db: Session = Depends(get_db)):
         row[0] for row in db.execute(select(Disciplina.codigo)).all()
     }
 
+    salvas = 0
     for disc in payload.disciplinas:
         if disc.codigo not in codigos_validos:
             continue
@@ -241,11 +242,12 @@ def salvar_historico(payload: HistoricoInput, db: Session = Depends(get_db)):
                 semestre         = disc.semestre,
             )
         )
+        salvas += 1
 
     db.commit()
     return HistoricoResponse(
         matricula          = payload.matricula,
-        disciplinas_salvas = len(payload.disciplinas),
+        disciplinas_salvas = salvas,
     )
 
 
@@ -254,8 +256,9 @@ def get_disponiveis(matricula: str, db: Session = Depends(get_db)):
     """
     Retorna as disciplinas que o aluno pode cursar no próximo semestre.
 
-    Uma disciplina está disponível quando ainda não foi aprovada e todos
-    os seus pré-requisitos já constam no histórico do aluno.
+    Uma disciplina está disponível quando ainda não foi aprovada, todos
+    os seus pré-requisitos já constam no histórico do aluno e o mínimo
+    de horas cursadas exigido (quando definido) foi atingido.
 
     :param matricula: Matrícula do aluno.
     :type matricula: str
@@ -282,13 +285,21 @@ def get_disponiveis(matricula: str, db: Session = Depends(get_db)):
 
     todas = db.execute(select(Disciplina)).scalars().all()
 
+    todas_map = {d.codigo: d for d in todas}
+    horas_cumpridas = sum(
+        todas_map[c].carga_horaria for c in aprovadas if c in todas_map
+    )
+
     disponiveis = []
     for disc in todas:
         if disc.codigo in aprovadas:
             continue
         prereqs = {p.codigo for p in disc.pre_requisitos}
-        if prereqs.issubset(aprovadas):
-            disponiveis.append(
+        if not prereqs.issubset(aprovadas):
+            continue
+        if disc.min_horas is not None and horas_cumpridas < disc.min_horas:
+            continue
+        disponiveis.append(
                 DisciplinaDisponivel(
                     codigo           = disc.codigo,
                     nome             = disc.nome,
@@ -668,8 +679,14 @@ def get_trilha(
             if not any(_aulas_conflitam_entre_si(d, j, tipo) for j in escolhidas):
                 escolhidas.append(d)
 
-        # Semestre sem obrigatórias disponíveis: avança (bloqueio de PAR/ÍMPAR)
-        if not escolhidas:
+        # Slots restantes viram placeholders de optativas, respeitando o total necessário.
+        # Calculado antes da guarda de semestre vazio para que optativas acumulem horas
+        # mesmo quando não há obrigatórias disponíveis (ex.: aguardando min_horas do TCC I).
+        slots_disponiveis = max_disciplinas - len(escolhidas)
+        slots_op = min(slots_disponiveis, optativas_faltantes - optativas_agendadas)
+
+        # Semestre sem obrigatórias E sem optativas para preencher: apenas avança.
+        if not escolhidas and slots_op == 0:
             semestre_atual = _proximo_semestre(semestre_atual)
             continue
 
@@ -692,9 +709,6 @@ def get_trilha(
             for d in escolhidas
         ]
 
-        # Slots restantes viram placeholders de optativas, respeitando o total necessário
-        slots_disponiveis = max_disciplinas - len(escolhidas)
-        slots_op = min(slots_disponiveis, optativas_faltantes - optativas_agendadas)
         for _ in range(slots_op):
             optativas_agendadas += 1
             disciplinas_semestre.append(
