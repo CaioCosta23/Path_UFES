@@ -71,6 +71,7 @@ def seed_disciplinas(session) -> int:
 
     for row in rows:
         min_horas_raw = (row.get("min_horas") or "").strip()
+        periodo_sug = int(row["periodo_sugerido"]) if row.get("periodo_sugerido", "").strip().isdigit() else None
         stmt = pg_insert(Disciplina).values(
             codigo          = row["codigo"].strip(),
             nome            = row["nome"].strip(),
@@ -78,11 +79,19 @@ def seed_disciplinas(session) -> int:
             carga_horaria   = int(row["chs"]),
             tipo_disciplina = _tipo(row["tipo"]),
             departamento    = _dept(row["departamento"]),
-            periodo_sugerido= int(row["periodo_sugerido"]) if row.get("periodo_sugerido", "").strip().isdigit() else None,
+            periodo_sugerido= periodo_sug,
             min_horas       = int(min_horas_raw) if min_horas_raw.isdigit() else None,
         ).on_conflict_do_update(
             index_elements=["codigo"],
-            set_={"min_horas": int(min_horas_raw) if min_horas_raw.isdigit() else None},
+            set_={
+                "nome":             row["nome"].strip(),
+                "creditos":         int(row["creditos"]),
+                "carga_horaria":    int(row["chs"]),
+                "tipo_disciplina":  _tipo(row["tipo"]),
+                "departamento":     _dept(row["departamento"]),
+                "periodo_sugerido": periodo_sug,
+                "min_horas":        int(min_horas_raw) if min_horas_raw.isdigit() else None,
+            },
         )
         session.execute(stmt)
 
