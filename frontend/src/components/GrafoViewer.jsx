@@ -23,8 +23,6 @@ export default function GrafoViewer() {
         alunoImportado,
         loading,
         erro,
-        adicionarNo,
-        adicionarAresta,
         carregarDePdf,
         carregarGrafo,
         carregarDoBackend,
@@ -33,26 +31,7 @@ export default function GrafoViewer() {
         reorganizarLayout,
     } = useGrafo();
 
-    // Cria par de valores ("estados") usados na interface do componente;
-    const [noId, setNoId] = useState("");
-    const [noLabel, setNoLabel] = useState("");
-    const [arestaSource, setArestaSource] = useState("");
-    const [arestaTarget, setArestaTarget] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(false);
-
-    // Cria um nó do grafo;
-    const handleAdicionarNo = () => {
-        adicionarNo(noId, noLabel);
-        setNoId("");
-        setNoLabel("");
-    };
-
-    //Cria uma aresa do grafo
-    const handleAdicionarAresta = () => {
-        adicionarAresta(arestaSource, arestaTarget)
-        setArestaSource("");
-        setArestaTarget("");
-    }
 
     // Carrega um arquivo (geralmente em formato "JSON");
     const handleCarregarArquivo = (event) => {
@@ -99,7 +78,7 @@ export default function GrafoViewer() {
                     className = {styles.button}
                     onClick = {() =>setSidebarOpen(true)}
                 >
-                    = Detalhes
+                    Detalhes
                 </button>
                 
                 {/**Botão que busca  o grafo do backend */}
@@ -125,50 +104,6 @@ export default function GrafoViewer() {
                     />
                 </label>
             </div>
-            {/*Barra de controles de nós*/}
-            <div className={styles.controls}>
-                {/** Campo de formulário da página de grafo*/}
-                <input
-                    type = "text"
-                    placeholder = "ID do nó"
-                    value = {noId}
-                    onChange = {(e) => setNoId(e.target.value)}
-                />
-                <input 
-                    type = "text"
-                    placeholder = "Label do nó"
-                    value = {noLabel}
-                    onChange = {(e) => setNoLabel(e.target.value)}
-                />
-                <button
-                    className = {styles.button}
-                    onClick = {handleAdicionarNo}
-                >
-                    Adicionar Nó
-                </button>
-            </div>
-
-            <div className = {styles.controls}>
-                <input
-                    type = "text"
-                    placeholder = "Nó de origem"
-                    value = {arestaSource}
-                    onChange = {(e) => setArestaSource(e.target.value)}
-                />
-                <input
-                    type = "text"
-                    placeholder = "Nó de destino"
-                    value = {arestaTarget}
-                    onChange = {(e) => setArestaTarget(e.target.value)}
-                />
-                <button
-                    className = {styles.button}
-                    onClick = {handleAdicionarAresta}
-                >
-                    Adicionar Aresta
-                </button>
-            </div>
-
             {/* Barra de Controles -Ações*/}
             <div className = {styles.controls}>
                 {/**Chamada de componentes (para reorganizar a
