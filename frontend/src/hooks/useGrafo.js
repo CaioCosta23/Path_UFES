@@ -36,6 +36,8 @@ export function useGrafo() {
                         "text-halign": "center",
                         "text-wrap": "wrap",
                         "text-max-width": "80px",
+                        width: "90px",
+                        height: "90px", 
                     },
                 },
                 // Verde: disciplina já cursada
