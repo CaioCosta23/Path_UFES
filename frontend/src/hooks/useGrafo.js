@@ -66,7 +66,7 @@ export function useGrafo() {
                 },
                 {
                     selector: "node:selected",
-                    style: {"background-color": "#4338ca"},
+                    style: {"background-color": "#f97316"},
                 },
                 {
                     selector: "edge",
