@@ -29,15 +29,15 @@ describe("Home", () => {
     it ("deve renderizar a descrição do projeto", () => {
         renderHome();
 
-        expect(
-            screen.getByText(/Explore as matérias e seus pré-requisitos/i)).toBeInTheDocument();
+        // Busca essa string em específico na página;
+        expect(screen.getByText(/Explore as matérias e seus pré-requisitos/i)).toBeInTheDocument();
     });
 
     // Busca o elemento que representa a o botão do grafo e o que ele deve visualizar;
     it ("deve renderizar o botão para o grafo", () => {
         renderHome();
 
-        const botao = screen.getByText("Visuializar Grafo ->");
+        const botao = screen.getByText("Visualizar Grafo");
         expect(botao).toBeInTheDocument();
         expect(botao.closest("a")).toHaveAttribute("href", "/grafo");
     });
