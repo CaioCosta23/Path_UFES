@@ -22,7 +22,7 @@ describe("Home", () => {
         renderHome();
 
         expect(
-            screen.getByText("Visualizador de Grade Curricular")).toBeInDocument();
+            screen.getByText("Visualizador de Grade Curricular")).toBeInTheDocument();
     });
     
     // Busca o elemento que representa a descrição da página e o que ele espera visualizar;
@@ -30,7 +30,7 @@ describe("Home", () => {
         renderHome();
 
         expect(
-            screen.getByText("/Explore as matérias e seus pré-requisitos/i")).toBeInDocument();
+            screen.getByText(/Explore as matérias e seus pré-requisitos/i)).toBeInTheDocument();
     });
 
     // Busca o elemento que representa a o botão do grafo e o que ele deve visualizar;
@@ -38,7 +38,7 @@ describe("Home", () => {
         renderHome();
 
         const botao = screen.getByText("Visuializar Grafo ->");
-        expect(botao).toBeInDocument();
+        expect(botao).toBeInTheDocument();
         expect(botao.closest("a")).toHaveAttribute("href", "/grafo");
     });
 
@@ -46,9 +46,9 @@ describe("Home", () => {
     it("deve renderizar os três cards de features", () => {
         renderHome();
 
-        expect(screen.getByText("Upload de PDF")).toBeInDocument();
-        expect(screen.getByText("Pré-Requisitos")).toBeInDocument();
-        expect(screen.getByText("Interativo")).toBeInDocument();
+        expect(screen.getByText("Upload de PDF")).toBeInTheDocument();
+        expect(screen.getByText("Pré-Requisitos")).toBeInTheDocument();
+        expect(screen.getByText("Interativo")).toBeInTheDocument();
     });
 
     // Busca os elementos que representam os ícones dos "cards" das páginas e o que espera visualizar;
@@ -56,8 +56,8 @@ describe("Home", () => {
         renderHome();
 
         // Sujeito a alterações por causa dos emojis;
-        expect(screen.getByText("paper")).toBeInDocument();
-        expect(screen.getByText("link")).toBeInDocument();
-        expect(screen.getByText("search")).toBeInDocument();
+        expect(screen.getByText("paper")).toBeInTheDocument();
+        expect(screen.getByText("link")).toBeInTheDocument();
+        expect(screen.getByText("search")).toBeInTheDocument();
     });
 });
