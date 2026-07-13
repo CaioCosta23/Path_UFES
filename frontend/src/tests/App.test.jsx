@@ -1,34 +1,33 @@
 import {describe, it, expect, vi} from "vitest";
 import {render, screen} from "@testing-library/react"
-import {MemoryRouter} from "react-router-dom";
 import App from "../App";
 
-vi.mock("./components/Background", () => ({
+vi.mock("../components/Background", () => ({
     default: () => <div data-testid = "background" />,
 }));
 
-vi.mock("./componets/Navbar", () => ({
-    default: () => <nav data testid = "navbar" />,
+vi.mock("../components/Navbar", () => ({
+    default: () => <nav data-testid = "navbar" />,
 }));
 
-vi.mock("./pages/Home", () => ({
-    default: () => <div data testid = "home" >Home</div>,
+vi.mock("../pages/Home", () => ({
+    default: () => <div data-testid = "home">Home</div>,
 }));
 
-vi.mock("./pages/Grafo", () => ({
-    default: () => <div data testid = "grafo" >Grafo</div>,
+vi.mock("../pages/Grafo", () => ({
+    default: () => <div data-testid = "grafo">Grafo</div>,
 }));
 
-vi.mock("./pages/Trilha", () => ({
-    default: () => <div data testid = "trilha" >Trilha</div>,
+vi.mock("../pages/Trilha", () => ({
+    default: () => <div data-testid = "trilha">Trilha</div>,
 }));
 
-vi.mock("./pages/About", () => ({
-    default: () => <div data testid = "about" >About</div>,
+vi.mock("../pages/About", () => ({
+    default: () => <div data-testid = "about">About</div>,
 }));
 
 describe("App", () => {
-    it ("deverenderizar o Background", () => {
+    it("deve renderizar o Background", () => {
         render(<App/>);
 
         expect(screen.getByTestId("background")).toBeInTheDocument();
@@ -40,46 +39,38 @@ describe("App", () => {
         expect(screen.getByTestId("navbar")).toBeInTheDocument();
     });
 
-    it("deve renderizar a página Home na rota", () => {
+    it("deve renderizar a página Home na rota /", () => {
         render(<App/>);
 
         expect(screen.getByTestId("home")).toBeInTheDocument();
     });
 
     it("deve renderizar a página Grafo na rota /grafo", () => {
-        render(
-            <MemoryRouter initialEntries = {["/grafo"]}>
-                <App/>
-            </MemoryRouter>
-        );
+        window.history.pushState({}, "", "/grafo");
+        render(<App/>);
         expect(screen.getByTestId("grafo")).toBeInTheDocument();
+        window.history.pushState({}, "", "/");
     });
 
     it("deve renderizar a página Trilha na rota /trilha", () => {
-        render(
-            <MemoryRouter initialEntries = {["/trilha"]}>
-                <App/>
-            </MemoryRouter>
-        );
+        window.history.pushState({}, "", "/trilha");
+        render(<App/>);
         expect(screen.getByTestId("trilha")).toBeInTheDocument();
+        window.history.pushState({}, "", "/");
     });
 
     it("deve renderizar a página About na rota /about", () => {
-        render(
-            <MemoryRouter initialEntries = {["/about"]}>
-                <App/>
-            </MemoryRouter>
-        );
+        window.history.pushState({}, "", "/about");
+        render(<App/>);
         expect(screen.getByTestId("about")).toBeInTheDocument();
+        window.history.pushState({}, "", "/");
     });
 
     it("deve renderizar para a página Home em rota desconhecida", () => {
-        render(
-            <MemoryRouter initialEntries = {["/rota-inexistente"]}>
-                <App/>
-            </MemoryRouter>
-        );
+        window.history.pushState({}, "", "/rota-inexistente");
+        render(<App/>);
         expect(screen.getByTestId("home")).toBeInTheDocument();
+        window.history.pushState({}, "", "/");
     });
 
     it("deve envolver a aplicação no ThemeProvider", () => {

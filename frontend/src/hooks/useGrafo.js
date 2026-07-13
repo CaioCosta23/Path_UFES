@@ -158,7 +158,7 @@ export function useGrafo() {
     };
 
     const carregarGrafo = (elementos) => {
-        if (!elementos)
+        if (!elementos || !cyRef.current)
             return;
         cyRef.current.elements().remove();
         cyRef.current.add(elementos);

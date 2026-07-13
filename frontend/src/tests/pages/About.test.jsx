@@ -10,56 +10,50 @@ describe("About", () => {
                 <About/>
             </MemoryRouter>
         );
-    
+
     it("deve renderizar o título principal", () => {
         renderAbout();
 
-        expect(
-            screen.getByText("Sobre o projeto")).toBeInDocument();
+        expect(screen.getByText(/sobre o projeto/i)).toBeInTheDocument();
     });
 
-    it ("deve renderizar a descrição do projeto", () => {
+    it("deve renderizar a descrição do projeto", () => {
         renderAbout();
 
-        expect(
-            screen.getByText("/ferramenta acadêmica")).toBeInDocument();
+        expect(screen.getByText(/ferramenta de planejamento acadêmico/i)).toBeInTheDocument();
     });
 
-    it ("deve renderizar o link do GitHub do projeto", () => {
+    it("deve renderizar o link do GitHub do projeto", () => {
         renderAbout();
 
-        const link = screen.getByText("Ver projeto no GitHub ->");
-        expect(link).toBeInDocument();
-        expect(link.closest("a")).toHaveAttribute(
+        const link = screen.getByRole("link", {name: "GitHub."});
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute(
             "href",
             "https://github.com/CaioCosta23/Path_UFES.git"
         );
     });
 
-    it ("deve abrir o link do GitHub em nova aba", () => {
+    it("deve abrir o link do GitHub em nova aba", () => {
         renderAbout();
 
-        const link = screen.getByText("Ver projeto no GitHub ->");
-        expect(link).toBeInDocument();
-        expect(link.closest("a")).toHaveAttribute("target", "_blank"
-        );
+        const link = screen.getByRole("link", {name: "GitHub."});
+        expect(link).toHaveAttribute("target", "_blank");
     });
 
-    
-    it ("deve renderizar a seção de  desenvolvedores", () => {
+    it("deve renderizar a seção de desenvolvedores", () => {
         renderAbout();
 
-        const nomes = screen.getAllByText("Nome do Dev");
-        expect(nomes).toHaveLength(2);
+        expect(screen.getByText("Desenvolvedores")).toBeInTheDocument();
+        expect(screen.getByText("Caio Costa Lopes")).toBeInTheDocument();
+        expect(screen.getByText("Daniel Sbrocco Olimpio")).toBeInTheDocument();
+        expect(screen.getByText("Miguel Zon Murad")).toBeInTheDocument();
     });
 
-    it ("deve renderizar o link do GitHub de cada desenvolvedor", () => {
-        renderAbout();
+    it("deve renderizar três desenvolvedores", () => {
+        const {container} = renderAbout();
 
-        const links = screen.getAllByText("GitHub ->");
-        expect(links).toHaveLength(2);
-        links.forEach((link) => {
-            expect(link.closest("a")).toHaveAttribute("target", "_blank");
-        });
+        const devCards = container.querySelectorAll("[class*='devCard']");
+        expect(devCards.length).toBe(3);
     });
 });

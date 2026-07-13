@@ -1,125 +1,128 @@
 import {describe, it, expect, vi, afterEach} from "vitest";
-import {render,Hook, act} from "@testing-library/react";
+import {renderHook, act} from "@testing-library/react";
 import {useTrilha} from "../../hooks/useTrilha";
 
 vi.mock("../../services/trilhaService", () => ({
-    fetchTrilha:vi.fn(),
+    fetchTrilha: vi.fn(),
 }));
 
 import {fetchTrilha} from "../../services/trilhaService";
 
 describe("useTrilha", () => {
     afterEach(() => {
-        afterEach(() => {
-            vi.clearAllMocks();
+        vi.clearAllMocks();
+    });
+
+    it("deve iniciar com estados vazios", () => {
+        const {result} = renderHook(() => useTrilha());
+
+        expect(result.current.trilha).toBeNull();
+        expect(result.current.loading).toBe(false);
+        expect(result.current.erro).toBeNull();
+    });
+
+    it("deve definir erro quando a matrícula não for informada", async () => {
+        const {result} = renderHook(() => useTrilha());
+
+        await act(async () => {
+            await result.current.gerarTrilha("", "2024.1", 5, []);
         });
 
-        it ("deve iniciar com estados vazios", () => {
-            const {result} = renderHook(() => useTrilha());
+        expect(result.current.erro).toBe("Informe a matrícula e o semestre de início.");
+        expect(fetchTrilha).not.toHaveBeenCalled();
+    });
 
-            expect(result.current.trilha).toBeNull();
-            expect(result.current.loading).toBe(false);
-            expect(result.current.erro).toBeNull();
+    it("deve definir erro quando semestre não for informado", async () => {
+        const {result} = renderHook(() => useTrilha());
+
+        await act(async () => {
+            await result.current.gerarTrilha("12345", "", 5, []);
         });
 
-        it("deve definir erro quando a matrícula não for informada", async () => {
-            const {result} = renderHook(() => useTrilha());
+        expect(result.current.erro).toBe("Informe a matrícula e o semestre de início.");
+        expect(fetchTrilha).not.toHaveBeenCalled();
+    });
 
-            await act(async () => {
-                await result.current.gerarTrilha("", "2024.1", 5, []);
-            });
+    it("deve definir loading como true durante a requisição", async () => {
+        let resolvePromise;
+        fetchTrilha.mockImplementationOnce(
+            () => new Promise((resolve) => { resolvePromise = resolve; })
+        );
 
-            expect(result.current.erro).toBe("Informe a matrícula e o semestre de início");
-            expect(fetchTrilha).not.toHaveBeenCalled();
+        const {result} = renderHook(() => useTrilha());
+
+        act(() => {
+            result.current.gerarTrilha("12345", "2024.1", 5, []);
         });
 
-        it("deve definir erro quando semestre não for informado", async () => {
-            const {result} = renderHook(() => useTrilha());
+        expect(result.current.loading).toBe(true);
 
-            await act(async () => {
-                await result.current.gerarTrilha("12345", "", 5, []);
-            });
+        await act(async () => { resolvePromise({}); });
+    });
 
-            expect(result.current.erro).toBe("Informe a matrícula e o semestre de início");
-            expect(fetchTrilha).not.toHaveBeenCalled();
+    it("deve carregar a trilha com sucesso", async () => {
+        const trilhaMock = {
+            disciplinas: [
+                {id: 1, nome: "Cálculo I", semestre: 1},
+                {id: 2, nome: "Cálculo II", semestre: 2},
+            ],
+        };
+        fetchTrilha.mockResolvedValueOnce(trilhaMock);
+
+        const {result} = renderHook(() => useTrilha());
+
+        await act(async () => {
+            await result.current.gerarTrilha("12345", "2024.1", 5, []);
         });
 
-        it("deve definir loading como true durante a requisição", async () => {
-            fetchTrilha.mockImplementationOnce(
-                () => new Promise(() => {})
-            );
+        expect(result.current.trilha).toEqual(trilhaMock);
+        expect(result.current.loading).toBe(false);
+        expect(result.current.erro).toBeNull();
+    });
 
-            const {result} = renderHook(() => useTrilha());
+    it("deve definir erro quando a requisição falhar", async () => {
+        fetchTrilha.mockRejectedValueOnce(new Error("Erro de conexão"));
 
-            act(() => {
-                result.current.gerarTrilha("12345", "2024.1", 5, []);
-            });
+        const {result} = renderHook(() => useTrilha());
 
-            experct(result.current.loading).toBe(true);
+        await act(async () => {
+            await result.current.gerarTrilha("12345", "2024.1", 5, []);
         });
 
-        it("deve carregar a trilha com sucesso", async () => {
-            const trilhaMock = {
-                disciplinas: [
-                    {id: 1, nome: "Cálculo I", semestre: 1},
-                    {id: 2, nome: "Cálculo II", semestre: 2},
-                ],
-            };
-            fetchTrilha.mockResolvedValueOnce(trilhaMock);
+        expect(result.current.erro).toBe("Erro de conexão");
+        expect(result.current.trilha).toBeNull();
+        expect(result.current.loading).toBe(false);
+    });
 
-            const {result} = renderHok(() => useTrilha());
+    it("deve resetar trilha e erro antes da nova requisição", async () => {
+        fetchTrilha.mockResolvedValueOnce({disciplinas: []});
 
-            await act(async () => {
-                await result.current.gerarTrilha("12345", "2024.1", 5, []);
-            });
+        const {result} = renderHook(() => useTrilha());
 
-            expect(result.current.trilha).toEqual(trilhaMock);
-            expect(result.current.loading).toBe(false);
-            expect(result.current.erro).toBeNull();
+        await act(async () => {
+            await result.current.gerarTrilha("12345", "2024.1", 5, []);
         });
 
-        it("deve definir erro quando a requisição falhar", async () => {
-            const {result} = renderHok(() => useTrilha());
+        fetchTrilha.mockRejectedValueOnce(new Error("Erro"));
 
-            await act(async () => {
-                await result.current.gerarTrilha("12345", "2024.1", 5, []);
-            });
-
-            expect(result.current.trilha).toBe("Erro de conexão");
-            expect(result.current.loading).toBe(false);
-            expect(result.current.erro).toBeNull();
-        });
-        
-        it("deve resetar trilha e erro antes da nova requisição", async () => {
-            fetchTrilha.mockResolvedValueOnce({disciplinas: []});
-
-            const {result} = renderHok(() => useTrilha());
-
-            await act(async () => {
-                await result.current.gerarTrilha("12345", "2024.1", 5, []);
-            });
-
-            fetchTrilha.mockRejectedValueOnce(new Error("Erro"));
-
-            await act(async () => {
-                await result.current.gerarTrilha("12345", "2024.1", 5, []);
-            });
-
-            expect(result.current.trilha).toBeNull();
-            expect(result.current.erro).toBe("Erro");
+        await act(async () => {
+            await result.current.gerarTrilha("12345", "2024.1", 5, []);
         });
 
-        it("deve passar os parâmetros corretos para o fetchTrilha", async () => {
-            fetchTrilha.mockResolvedValueOnce({});
+        expect(result.current.trilha).toBeNull();
+        expect(result.current.erro).toBe("Erro");
+    });
 
-            const {result} = renderHok(() => useTrilha());
-            const horariosBloqueados = ["seg-manha", "ter-tarde"];
+    it("deve passar os parâmetros corretos para o fetchTrilha", async () => {
+        fetchTrilha.mockResolvedValueOnce({});
 
-            await act(async () => {
-                await result.current.gerarTrilha("12345", "2024.1", 5, horariosBloqueados);
-            });
+        const {result} = renderHook(() => useTrilha());
+        const horariosBloqueados = ["seg-manha", "ter-tarde"];
 
-            expect(fetchTrilha).toHaveBeenCalledWith("12345", "2024.1", 5, horariosBloqueados);
+        await act(async () => {
+            await result.current.gerarTrilha("12345", "2024.1", 5, horariosBloqueados);
         });
+
+        expect(fetchTrilha).toHaveBeenCalledWith("12345", "2024.1", 5, horariosBloqueados);
     });
 });
