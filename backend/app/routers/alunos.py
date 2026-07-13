@@ -11,6 +11,7 @@ levando em conta esperas causadas por restrições de PAR/ÍMPAR.
 """
 import io
 import re
+import unicodedata
 from collections import defaultdict
 
 import pdfplumber
@@ -29,6 +30,24 @@ from app.schemas import (
 OPTATIVAS_EXIGIDAS = 9
 
 router = APIRouter(prefix="/aluno", tags=["aluno"])
+
+
+def _normalizar_nome(nome: str) -> str:
+    """
+    Normaliza o nome de uma disciplina para comparação insensível a acentos e caixa.
+
+    Remove acentos via decomposição NFKD, converte para maiúsculas e colapsa
+    espaços múltiplos. Usado como chave de fallback em ``salvar_historico``
+    quando o código da disciplina do PDF não existe no banco de dados.
+
+    :param nome: Nome original da disciplina.
+    :type nome: str
+    :return: Nome normalizado (ex.: ``"Cálculo I"`` → ``"CALCULO I"``).
+    :rtype: str
+    """
+    nfkd = unicodedata.normalize("NFKD", nome.strip().upper())
+    sem_acentos = "".join(c for c in nfkd if not unicodedata.combining(c))
+    return " ".join(sem_acentos.split())
 
 
 # ---------------------------------------------------------------------------
@@ -74,9 +93,17 @@ def _parse_historico_pdf(texto: str) -> list[dict]:
     """
     Extrai as disciplinas aprovadas (situação AP) do histórico SIE.
 
+    Além do código e da média, tenta extrair o nome e a carga horária de
+    cada linha para permitir o fallback por ``(nome, carga_horaria)`` em
+    ``salvar_historico`` quando o código não existe no banco de dados.
+    O formato esperado em cada linha é::
+
+        CODIGO  Nome da Disciplina  creditos  carga_horaria  media  AP
+
     :param texto: Texto completo extraído do PDF.
     :type texto: str
-    :return: Lista de dicionários com codigo, media, ano e semestre.
+    :return: Lista de dicionários com codigo, media, ano, semestre,
+             nome (opcional) e carga_horaria (opcional).
     :rtype: list[dict]
     """
     aprovadas: list[dict] = []
@@ -107,11 +134,22 @@ def _parse_historico_pdf(texto: str) -> list[dict]:
         media_m = re.search(r"([\d]+[,.][\d]+)\s+AP\b", trecho)
         media   = media_m.group(1).replace(",", ".") if media_m else None
 
+        # Tenta extrair nome e carga horária para fallback por (nome, ch)
+        # Formato: "CODIGO Nome da Disc creditos carga_horaria media AP"
+        meta_m = re.search(
+            r"[A-Z]{3}\d{5}\s+([^\d\n]+?)\s+\d+\s+(\d+)\s+[\d.,]+\s+AP\b",
+            trecho,
+        )
+        nome_pdf = meta_m.group(1).strip() if meta_m else None
+        carga_horaria_pdf = int(meta_m.group(2)) if meta_m else None
+
         aprovadas.append({
-            "codigo":   codigo,
-            "media":    media,
-            "ano":      semestre_atual[0],
-            "semestre": semestre_atual[1],
+            "codigo":        codigo,
+            "media":         media,
+            "ano":           semestre_atual[0],
+            "semestre":      semestre_atual[1],
+            "nome":          nome_pdf,
+            "carga_horaria": carga_horaria_pdf,
         })
 
     return aprovadas
@@ -165,8 +203,14 @@ def upload_historico_pdf(
         periodo_ingresso = dados_aluno["semestre_ingresso"] or "1",
         cr               = float(dados_aluno["cr"]) if dados_aluno["cr"] else None,
         disciplinas      = [
-            {"codigo": d["codigo"], "media": float(d["media"]) if d["media"] else None,
-             "ano": int(d["ano"]), "semestre": int(d["semestre"])}
+            {
+                "codigo":        d["codigo"],
+                "media":         float(d["media"]) if d["media"] else None,
+                "ano":           int(d["ano"]),
+                "semestre":      int(d["semestre"]),
+                "nome":          d.get("nome"),
+                "carga_horaria": d.get("carga_horaria"),
+            }
             for d in disciplinas
         ],
     )
@@ -225,21 +269,34 @@ def salvar_historico(payload: HistoricoInput, db: Session = Depends(get_db)):
         )
         db.flush()
 
-    codigos_validos = {
-        row[0] for row in db.execute(select(Disciplina.codigo)).all()
+    todas_disc = db.execute(select(Disciplina)).scalars().all()
+    codigos_validos = {d.codigo for d in todas_disc}
+    # Fallback: (nome_normalizado, carga_horaria) → codigo real no banco
+    nome_ch_map: dict[tuple, str] = {
+        (_normalizar_nome(d.nome), d.carga_horaria): d.codigo
+        for d in todas_disc
     }
 
     salvas = 0
     for disc in payload.disciplinas:
-        if disc.codigo not in codigos_validos:
+        codigo_db = disc.codigo
+        if codigo_db not in codigos_validos:
+            # Tenta encontrar pelo nome + carga horária (disciplinas renomeadas/recodificadas)
+            if disc.nome and disc.carga_horaria:
+                codigo_db = nome_ch_map.get(
+                    (_normalizar_nome(disc.nome), disc.carga_horaria)
+                )
+            else:
+                codigo_db = None
+        if not codigo_db:
             continue
         db.execute(
             insert(hist_disc_table).values(
-                historico_id     = historico.id,
-                codigo_disciplina = disc.codigo,
-                media            = disc.media,
-                ano              = disc.ano,
-                semestre         = disc.semestre,
+                historico_id      = historico.id,
+                codigo_disciplina = codigo_db,
+                media             = disc.media,
+                ano               = disc.ano,
+                semestre          = disc.semestre,
             )
         )
         salvas += 1

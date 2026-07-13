@@ -246,6 +246,42 @@ def test_upload_pdf_arquivo_invalido(client, db_session):
 # POST /aluno/historico
 # ---------------------------------------------------------------------------
 
+def test_salvar_historico_fallback_nome_carga_horaria(client, db_session):
+    """
+    Quando o código do PDF não existe no banco mas nome + carga_horaria
+    coincidem com outra disciplina, deve salvar usando o código do banco.
+    Simula disciplina renomeada/recodificada entre versões curriculares.
+    """
+    # Banco tem o código novo "INF99999" com nome "Calculo I" e 60h
+    _inserir_disciplina(db_session, "INF99999", "Calculo I")
+    db_session.commit()
+
+    # Payload chega com o código antigo "MAT00001" (não existe no banco),
+    # mas informa nome="Calculo I" e carga_horaria=60 → deve fazer fallback
+    payload = {**PAYLOAD_BASE, "disciplinas": [
+        {"codigo": "MAT00001", "media": 8.0, "ano": 2023, "semestre": 1,
+         "nome": "Calculo I", "carga_horaria": 60},
+    ]}
+    resp = client.post("/aluno/historico", json=payload)
+    assert resp.status_code == 201
+    assert resp.json()["disciplinas_salvas"] == 1
+
+
+def test_salvar_historico_fallback_acento(client, db_session):
+    """Fallback deve funcionar mesmo com diferença de acentuação entre PDF e banco."""
+    _inserir_disciplina(db_session, "INF99999", "Cálculo I")  # banco tem acento
+    db_session.commit()
+
+    # PDF não tem acento (comum em PDFs mal codificados)
+    payload = {**PAYLOAD_BASE, "disciplinas": [
+        {"codigo": "MAT00001", "media": 7.5, "ano": 2023, "semestre": 1,
+         "nome": "Calculo I", "carga_horaria": 60},
+    ]}
+    resp = client.post("/aluno/historico", json=payload)
+    assert resp.status_code == 201
+    assert resp.json()["disciplinas_salvas"] == 1
+
+
 def test_salvar_historico_vazio(client, db_session):
     """Deve aceitar histórico sem disciplinas aprovadas."""
     resp = client.post("/aluno/historico", json=PAYLOAD_BASE)

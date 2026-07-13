@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from "vitest";
-import {render, scree, fireEvent} from "@testing-library/react";
+import {render, screen, fireEvent} from "@testing-library/react";
 import Sidebar from "../../components/Sidebar";
 
 describe("Sidebar", () => {
@@ -12,8 +12,8 @@ describe("Sidebar", () => {
             />
         );
 
-        expect(screen.queryByText("Detalhes")).toBeInDocument();
-        expect(screen.queryByRole("presentation")).not.toBeTheDocument();
+        expect(screen.queryByText("Detalhes")).toBeInTheDocument();
+        expect(screen.queryByRole("presentation")).not.toBeInTheDocument();
     });
 
     it("deve mostrar overlay quando aberta", () => {
@@ -25,7 +25,7 @@ describe("Sidebar", () => {
             />
         );
 
-        expect(container.querySelector("[class*='overlay']")).toBeInDocument();
+        expect(container.querySelector("[class*='overlay']")).toBeInTheDocument();
     });
 
     it("deve chamar o onClose ao clicar no overlay", () => {
@@ -52,7 +52,7 @@ describe("Sidebar", () => {
             />
         );
 
-        fireEvent.click(screen.getByLabelText("Fechar Sidebar"));
+        fireEvent.click(screen.getByLabelText("Fechar sidebar"));
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -65,7 +65,7 @@ describe("Sidebar", () => {
             />
         );
 
-        expect(screen.getByText("clique em um nó ou aresta do grafo para ver detalhes")).toBeInDocument();
+        expect(screen.getByText("Clique em um nó ou aresta do grafo para ver os detalhes aqui.")).toBeInTheDocument();
     });
 
     it("deve mostrar detalhes do nó quando selecionado", () => {
@@ -77,9 +77,9 @@ describe("Sidebar", () => {
             />
         );
 
-        expect(screen.getByText("Matéria")).toBeInDocument();
-        expect(screen.getByText("1")).toBeInDocument();
-        expect(screen.getByText("Cálculo I")).toBeInDocument();
+        expect(screen.getByText("Matérias")).toBeInTheDocument();
+        expect(screen.getByText("1")).toBeInTheDocument();
+        expect(screen.getByText("Cálculo I")).toBeInTheDocument();
     });
 
     it("deve mostrar detalhes da aresta quando selecionada", () => {
@@ -87,12 +87,12 @@ describe("Sidebar", () => {
             <Sidebar
                 isOpen = {true}
                 onClose = {vi.fn()}
-                elementoSelecionado = {{id: "1-2", source: "1", target = "1"}}
+                elementoSelecionado = {{id: "1-2", source: "1", target: "2"}}
             />
         );
 
-        expect(screen.getByText("Relação")).toBeInDocument();
-        expect(screen.getByText("1")).toBeInDocument();
-        expect(screen.getByText("2")).toBeInDocument();
+        expect(screen.getByText("Relação")).toBeInTheDocument();
+        expect(screen.getByText("1")).toBeInTheDocument();
+        expect(screen.getByText("2")).toBeInTheDocument();
     });
 });

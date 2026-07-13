@@ -14,6 +14,7 @@
     "docs": "jsdoc -c jsdoc.json"
   },
   "dependencies": {
+    "@testing-library/dom": "^10.4.1",
     "bootstrap": "^5.3.8",
     "cytoscape": "^3.34.0",
     "lucide-react": "^1.23.0",

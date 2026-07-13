@@ -1,5 +1,5 @@
-import {describe, it , expect, vi, afterEach} from "vitest";
-import{fetchMaterias, fetchRelacionamentos, fetchMateria, uploadPdf,} from "../../services/grafServices";
+import {describe, it, expect, vi, afterEach} from "vitest";
+import {fetchGrafo, uploadPdf} from "../../services/grafoService";
 import {api} from "../../services/api";
 
 vi.mock("../../services/api", () => ({
@@ -14,73 +14,51 @@ describe("grafoService", () => {
         vi.clearAllMocks();
     });
 
-    describe("fetchMaterias", () => {
-        it("deve buscar todas as matérias", async () => {
-            const materiasMock = [
-                {id: 1, nome: "Cálculo I"},
-                {id: 2, nome: "Cálculo II"},
-            ];
-            
-            api.get.mockResolvedValueOnce(materiasMock);
+    describe("fetchGrafo", () => {
+        it("deve buscar o grafo sem matrícula", async () => {
+            const grafoMock = {nos: [], arestas: []};
+            api.get.mockResolvedValueOnce(grafoMock);
 
-            const resultado = await fetchMaterias();
+            const resultado = await fetchGrafo();
 
-            expect(api.get).toHaveBeenCalledWith("/materias");
-            expect(resultado).toEqual(materiasMock);
+            expect(api.get).toHaveBeenCalledWith("/grafo");
+            expect(resultado).toEqual(grafoMock);
         });
 
-        it("deve lançar erro quando a busca falhar", async () => {
-            api.get.mockResolvedValueOnce(new Error("Erro ao buscar matérias"));
+        it("deve buscar o grafo com matrícula", async () => {
+            const grafoMock = {nos: [{id: "MAT001", nome: "Cálculo I", status: "cumprida"}], arestas: []};
+            api.get.mockResolvedValueOnce(grafoMock);
 
-            await expect(fetchMaterias()).rejects.toThrow("Erro ao buscar matérias");
+            const resultado = await fetchGrafo("2023100265");
+
+            expect(api.get).toHaveBeenCalledWith("/grafo?matricula=2023100265");
+            expect(resultado).toEqual(grafoMock);
         });
-    });
 
-    describe("fetchRelacionamentos", () => {
-        it("deve buscar todas os relacionamentos", async () => {
-            const relacionamentosMock = [
-                {origem: 1, destino: 2},
-            ];
-            
-            api.get.mockResolvedValueOnce(relacionamentosMock);
+        it("deve propagar erro quando a requisição falhar", async () => {
+            api.get.mockRejectedValueOnce(new Error("Erro de conexão"));
 
-            const resultado = await fetchRelacionamentos();
-
-            expect(api.get).toHaveBeenCalledWith("/relacionamentos");
-            expect(resultado).toEqual(relacionamentosMock);
-        });
-    });
-
-    describe("fetchMateria", () => {
-        it("deve buscar uma matéria específica por ID", async () => {
-            const materiaMock = [{id: 1, nome: "Cálculo I"},
-            ];
-            
-            api.get.mockResolvedValueOnce(materiaMock);
-
-            const resultado = await fetchMateria(1);
-
-            expect(api.get).toHaveBeenCalledWith("/materias/1");
-            expect(resultado).toEqual(materiaMock);
+            await expect(fetchGrafo()).rejects.toThrow("Erro de conexão");
         });
     });
 
     describe("uploadPdf", () => {
         it("deve enviar o PDF corretamente", async () => {
-            const arquivo = new File(["conteudo"], "grade.pdf",{
-                type: "application/pdf"
-            });
-
-            const respostaMock = {
-                materias: [{id: 1, nome: "Cálculo I"}],
-            }
-            
+            const arquivo = new File(["conteudo"], "grade.pdf", {type: "application/pdf"});
+            const respostaMock = {matricula: "2023100265", nome: "Aluno", disciplinas_importadas: 10};
             api.postFile.mockResolvedValueOnce(respostaMock);
 
             const resultado = await uploadPdf(arquivo);
 
-            expect(api.postFile).toHaveBeenCalledWith("/upload-pdf", arquivo);
+            expect(api.postFile).toHaveBeenCalledWith("/aluno/upload-pdf", arquivo);
             expect(resultado).toEqual(respostaMock);
+        });
+
+        it("deve propagar erro quando o upload falhar", async () => {
+            const arquivo = new File([""], "grade.pdf");
+            api.postFile.mockRejectedValueOnce(new Error("Falha no upload"));
+
+            await expect(uploadPdf(arquivo)).rejects.toThrow("Falha no upload");
         });
     });
 });

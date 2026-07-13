@@ -58,11 +58,21 @@ class GrafoResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class DisciplinaAprovada(BaseModel):
-    """Disciplina aprovada no histórico do aluno."""
-    codigo:   str
-    media:    float | None = None
-    ano:      int
-    semestre: int
+    """
+    Disciplina aprovada no histórico do aluno.
+
+    ``nome`` e ``carga_horaria`` são opcionais e preenchidos apenas quando
+    a origem é o PDF do SIE. Se o ``codigo`` não existir no banco de dados,
+    ``salvar_historico`` tenta localizar a disciplina pelo par
+    ``(nome_normalizado, carga_horaria)`` para tratar disciplinas
+    renomeadas ou recodificadas entre versões curriculares.
+    """
+    codigo:        str
+    media:         float | None = None
+    ano:           int
+    semestre:      int
+    nome:          str | None = None
+    carga_horaria: int | None = None
 
 
 class HistoricoInput(BaseModel):
