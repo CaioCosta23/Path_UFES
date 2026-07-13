@@ -47,17 +47,27 @@ describe("Home", () => {
         renderHome();
 
         expect(screen.getByText("Upload de PDF")).toBeInTheDocument();
+        expect(screen.getByText(/Envie sua grade curicular/i)).toBeInTheDocument();
+
         expect(screen.getByText("Pré-Requisitos")).toBeInTheDocument();
+        expect(screen.getByText(/Visualize as conexões entre as matérias/i)).toBeInTheDocument();
+
         expect(screen.getByText("Interativo")).toBeInTheDocument();
+        expect(screen.getByText(/Clique nos nós para ver detalhes/i)).toBeInTheDocument();
     });
 
     // Busca os elementos que representam os ícones dos "cards" das páginas e o que espera visualizar;
     it ("deve renderizar os ícones dos cards", () => {
-        renderHome();
+        const {container} = renderHome();
 
-        // Sujeito a alterações por causa dos emojis;
-        expect(screen.getByText("paper")).toBeInTheDocument();
-        expect(screen.getByText("link")).toBeInTheDocument();
-        expect(screen.getByText("search")).toBeInTheDocument();
+        /**
+         * Verifica somente se a quantidade de ícones (em formato SVG - suportado pelo "lucide-react" está correto,
+         * não verificando qual o emoji e/ou figura);
+         * 
+         * OBS: Pode ser alterado futuramente junto ao arquivo "Home.jsx" para a resolução desse 'problema';
+         */
+        const icones = container.querySelectorAll("svg");
+
+        expect(icones.length()).toBe(3);
     });
 });
