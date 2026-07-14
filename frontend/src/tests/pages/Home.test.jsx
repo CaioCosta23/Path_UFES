@@ -16,7 +16,7 @@ describe("Home", () => {
                 <Home/>
             </MemoryRouter>
         );
-    
+
     // Busca o elemento que representa o título na página e o que ele espera visualizar;
     it("deve renderizar o título principal", () => {
         renderHome();
@@ -24,17 +24,17 @@ describe("Home", () => {
         expect(
             screen.getByText("Visualizador de Grade Curricular")).toBeInTheDocument();
     });
-    
+
     // Busca o elemento que representa a descrição da página e o que ele espera visualizar;
-    it ("deve renderizar a descrição do projeto", () => {
+    it("deve renderizar a descrição do projeto", () => {
         renderHome();
 
         // Busca essa string em específico na página;
         expect(screen.getByText(/Explore as matérias e seus pré-requisitos/i)).toBeInTheDocument();
     });
 
-    // Busca o elemento que representa a o botão do grafo e o que ele deve visualizar;
-    it ("deve renderizar o botão para o grafo", () => {
+    // Busca o elemento que representa o botão do grafo e o que ele deve visualizar;
+    it("deve renderizar o botão para o grafo", () => {
         renderHome();
 
         const botao = screen.getByText("Visualizar Grafo");
@@ -42,7 +42,7 @@ describe("Home", () => {
         expect(botao.closest("a")).toHaveAttribute("href", "/grafo");
     });
 
-    // Busca o elemento que representa os "cards" das "features" o que espera visualizar;
+    // Busca o elemento que representa os "cards" das "features" e o que espera visualizar;
     it("deve renderizar os três cards de features", () => {
         renderHome();
 

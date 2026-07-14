@@ -6,31 +6,32 @@ vi.mock("cytoscape", () => ({
     default: vi.fn(() => ({
         on: vi.fn(),
         add: vi.fn(),
-        elements: vi(() => ({
+        elements: vi.fn(() => ({
             remove: vi.fn(),
+            length: 0,
+            filter: vi.fn(() => []),
+            boundingBox: vi.fn(() => ({x1: 0, x2: 100, y1: 0, y2: 100})),
         })),
         layout: vi.fn(() => ({run: vi.fn()})),
         fit: vi.fn(),
         center: vi.fn(),
-        $: vi.fn(() => ({remove:vi.fn()})),
+        zoom: vi.fn(() => 1),
+        pan: vi.fn(() => ({x: 0, y: 0})),
+        width: vi.fn(() => 800),
+        height: vi.fn(() => 600),
+        $: vi.fn(() => ({remove: vi.fn()})),
         destroy: vi.fn(),
     })),
 }));
 
 vi.mock("../../services/grafoService", () => ({
-    fetchMaterias: vi.fn(),
-    fetchRelacionamentos: vi.fn(),
+    fetchGrafo: vi.fn(),
     uploadPdf: vi.fn(),
 }));
 
-import {
-    fetchMaterias,
-    fetchRelacionamentos,
-    uploadPdf,
-}from "../../services/grafoService";
+import {fetchGrafo, uploadPdf} from "../../services/grafoService";
 
-
-describe ("useGrafo", () => {
+describe("useGrafo", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -40,7 +41,7 @@ describe ("useGrafo", () => {
 
         expect(result.current.nos).toEqual([]);
         expect(result.current.arestas).toEqual([]);
-        expect(result.current.elementoSelecionado).toBeNull([]);
+        expect(result.current.elementoSelecionado).toBeNull();
         expect(result.current.loading).toBe(false);
         expect(result.current.erro).toBeNull();
     });
@@ -93,18 +94,12 @@ describe ("useGrafo", () => {
         expect(result.current.elementoSelecionado).toBeNull();
     });
 
-    it ("deve carregar matérias do backend com sucesso", async () => {
-        fetchMaterias.mockResolvedValueOnce([
-            {id: 1, nome: "Cálculo I"},
-            {id: 2, nome: "Cálculo II"},
-        ]);
-        fetchRelacionamentos.mockResolvedValueOnce([
-            {origem: 1, destino: 2},
-        ]);
+    it("deve carregar matérias do backend com sucesso", async () => {
+        fetchGrafo.mockResolvedValueOnce({nos: [], arestas: []});
 
         const {result} = renderHook(() => useGrafo());
 
-        await act (async () => {
+        await act(async () => {
             await result.current.carregarDoBackend();
         });
 
@@ -112,12 +107,12 @@ describe ("useGrafo", () => {
         expect(result.current.erro).toBeNull();
     });
 
-    it ("deve definir erro quando carregarDoBackend falhar", async () => {
-        fetchMaterias.mockRejectedValueOnce(new Error ("Erro de conexão"));
+    it("deve definir erro quando carregarDoBackend falhar", async () => {
+        fetchGrafo.mockRejectedValueOnce(new Error("Erro de conexão"));
 
         const {result} = renderHook(() => useGrafo());
 
-        await act (async () => {
+        await act(async () => {
             await result.current.carregarDoBackend();
         });
 
@@ -125,16 +120,16 @@ describe ("useGrafo", () => {
         expect(result.current.loading).toBe(false);
     });
 
-    it ("deve carregar grafo de PDF com sucesso", async () => {
+    it("deve carregar grafo de PDF com sucesso", async () => {
         uploadPdf.mockResolvedValueOnce({
-            materias: [{id: 1, nome: "Cálculo I"}],
-            relacionamentos: [],
+            matricula: "123", nome: "Test", disciplinas_importadas: 1,
         });
+        fetchGrafo.mockResolvedValueOnce({nos: [], arestas: []});
 
         const {result} = renderHook(() => useGrafo());
         const arquivo = new File(["conteudo"], "grade.pdf");
 
-        await act (async () => {
+        await act(async () => {
             await result.current.carregarDePdf(arquivo);
         });
 

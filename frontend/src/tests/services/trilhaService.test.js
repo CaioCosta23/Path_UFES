@@ -2,7 +2,7 @@ import {describe, it, expect, vi, afterEach} from "vitest";
 import {fetchTrilha} from "../../services/trilhaService";
 import {api} from "../../services/api";
 
-vi.mock("../service/api", () => ({
+vi.mock("../../services/api", () => ({
     api: {
         get: vi.fn(),
     },
@@ -16,52 +16,52 @@ describe("trilhaService", () => {
     describe("fetchTrilha", () => {
         it("deve chamar o endpoint correto com os parâmetros obrigatórios", async () => {
             const trilhaMock = {disciplinas: []};
-            
+
             api.get.mockResolvedValueOnce(trilhaMock);
 
             await fetchTrilha("12345", "2024.1", 5, []);
 
-            expect(api.get).toHaveBeenCalledWith(expect.StringContaining("/aluno/12345/trilha"));
+            expect(api.get).toHaveBeenCalledWith(expect.stringContaining("/aluno/12345/trilha"));
         });
 
         it("deve incluir semestre_inicio nos parâmetros", async () => {
-            
+
             api.get.mockResolvedValueOnce({});
 
             await fetchTrilha("12345", "2024.1", 5, []);
 
-            expect(api.get).toHaveBeenCalledWith(expect.StringContaining("semestre_inicio=2024.1"));
+            expect(api.get).toHaveBeenCalledWith(expect.stringContaining("semestre_inicio=2024.1"));
         });
 
         it("deve incluir max_disciplinas nos parâmetros", async () => {
-            
+
             api.get.mockResolvedValueOnce({});
 
             await fetchTrilha("12345", "2024.1", 5, []);
 
-            expect(api.get).toHaveBeenCalledWith(expect.StringContaining("max_disciplinas=5"));
+            expect(api.get).toHaveBeenCalledWith(expect.stringContaining("max_disciplinas=5"));
         });
 
         it("deve incluir horarios_bloqueados nos parâmetros", async () => {
-            
+
             api.get.mockResolvedValueOnce({});
 
-            await fetchTrilha("12345", "2024.1", 5, ["seg-manha", "terc-tarde"]);
+            await fetchTrilha("12345", "2024.1", 5, ["seg-manha", "ter-tarde"]);
 
-            const urlChamada = api.get.mock.calls[0][0]
+            const urlChamada = api.get.mock.calls[0][0];
             expect(urlChamada).toContain("horarios_bloqueados=seg-manha");
-            expect(urlChamada).toContain("horarios_bloqueados=tec-tarde");
+            expect(urlChamada).toContain("horarios_bloqueados=ter-tarde");
         });
 
         it("deve funcionar sem horarios bloqueados", async () => {
-            
+
             api.get.mockResolvedValueOnce({});
 
             await expect(fetchTrilha("12345", "2024.1", 5, [])).resolves.not.toThrow();
         });
 
         it("deve codificar a matrícula na URL", async () => {
-            
+
             api.get.mockResolvedValueOnce({});
 
             await fetchTrilha("123/45", "2024.1", 5, []);
@@ -77,8 +77,8 @@ describe("trilhaService", () => {
                     {id: 2, nome: "Cálculo II", semestre: 2},
                 ],
             };
-            
-            api.get.mockResolvedValueOnce({});
+
+            api.get.mockResolvedValueOnce(trilhaMock);
 
             const resultado = await fetchTrilha("12345", "2024.1", 5, []);
 

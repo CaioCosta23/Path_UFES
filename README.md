@@ -138,18 +138,25 @@ Uma vez que o projeto será uma produção baseada no paradigma orientado à obj
 
 ---
 
+## Pré-requisitos :white_check_mark:
+
+- [Docker](https://docs.docker.com/get-docker/) >= 24
+- [Docker Compose](https://docs.docker.com/compose/) >= 2.20
+
+---
+
 ## Instalação e Execução da Aplicação :arrow_forward:
 
-Instalando a aplicação (repositório):
+Clone o repositório:
 
 ```GnuBash
 git clone https://github.com/CaioCosta23/Path_UFES.git
+cd Path_UFES
 ```
 
-Para executar a aplicação basta rodar o(s) seguinte(s) comando(s):
+Suba os serviços (banco de dados, backend e frontend):
 
 ```GnuBash
-cd Path_UFES
 docker compose up --build
 ```
 
@@ -157,31 +164,54 @@ docker compose up --build
 >
 > O container do backend aguarda o banco subir, aplica as migrations e popula o banco automaticamente antes de iniciar a API.
 
+Após subir, acesse:
+
+- Frontend: `http://localhost:5173`
+- API (backend): `http://localhost:8000`
+- Swagger UI: `http://localhost:8000/docs`
+
+Para parar os serviços:
+
+```GnuBash
+docker compose down
+```
+
+---
+
+## Testes :test_tube:
+
+Com os containers rodando (`docker compose up`), execute os testes em outro terminal:
+
+**Backend:**
+
+```GnuBash
+docker compose exec backend pytest tests/
+```
+
+**Frontend:**
+
+```GnuBash
+docker compose exec frontend npm run test
+```
+
 ---
 
 ## Gerando a Documentação :books:
 
 - **Documentação do código - Back-end (Sphinx):**
 
-    Como o desenvolvimento do _Back-end_ é feito dentro de um ambiente virtual Python, é necessário criá-lo (caso ainda não exista) e ativá-lo, dentro da pasta `backend` e, em seguida, criar algumas configurações de documentação (para o banco de dados e a aplicação de documentação automática) antes de gerar a documentação:
+    Crie e ative o ambiente virtual Python dentro da pasta `backend`, instale as dependências e gere a documentação:
 
     ```GnuBash
     cd backend
     python3 -m venv venv
     source venv/bin/activate
-    pip install sphinx_rtd_theme
-    pip install sqlalchemy psycopg2-binary alembic
-    pip freeze > requirements.txt
-    ```
-
-    Com o ambiente virtual ativo e suporte de documentação commpleta e do banco de dados criado, volte para a pasta raíz do projeto, gere a documentação com o Sphinx:
-
-    ```GnuBash
-    cd docs
+    pip install -r requirements.txt
+    cd ../docs
     sphinx-build -b html source build
     ```
 
-    Após a geração, abra o arquivo `docs/build/index.html` no navegador para visualizar a documentação.
+    Abra o arquivo `docs/build/index.html` no navegador para visualizar a documentação.
 
     > :bulb: Para sair do ambiente virtual após terminar, basta rodar `deactivate` no terminal.
 
@@ -191,17 +221,16 @@ docker compose up --build
 
     ```GnuBash
     cd frontend
+    npm install
     npm run docs
     ```
 
 - **Documentação da API (Swagger):**
 
-    Como o _Back-end_ é construído com FastAPI, a documentação interativa da API é gerada automaticamente e fica disponível assim que a aplicação está rodando (via `docker compose up`), nos endereços:
+    Como o _Back-end_ é construído com FastAPI, a documentação interativa da API é gerada automaticamente e fica disponível assim que a aplicação está rodando, nos endereços:
 
   - Swagger UI: `http://localhost:8000/docs`
   - Redoc: `http://localhost:8000/redoc`
-
-> :warning: Ajuste os caminhos (`docs/source`, `docs/build`) e a porta (`8000`) conforme a configuração final do projeto.
 
 ---
 

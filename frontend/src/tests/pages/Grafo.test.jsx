@@ -1,9 +1,9 @@
 import {describe, it, expect, vi} from "vitest";
 import {render, screen} from "@testing-library/react";
 import {MemoryRouter} from "react-router-dom";
-import Home from "../../pages/Grafo";
+import Grafo from "../../pages/Grafo";
 
-vi.mock("../../componets/GrafoViewer", () => ({
+vi.mock("../../components/GrafoViewer", () => ({
     default: () => <div data-testid = "grafo-viewer"/>
 }));
 
@@ -14,25 +14,25 @@ describe("Grafo", () => {
                 <Grafo/>
             </MemoryRouter>
         );
-    
+
     it("deve renderizar o título da página", () => {
         renderGrafo();
 
         expect(
-            screen.getByText("Visualizador de Grafo")).toBeInDocument();
+            screen.getByText("Visualizador de Grafo")).toBeInTheDocument();
     });
 
-    it ("deve renderizar o subtítulo", () => {
+    it("deve renderizar o subtítulo", () => {
         renderGrafo();
 
         expect(
-            screen.getByText("Carregue um PDF ou um JSON para visualizar a grade curricular.")).toBeInDocument();
+            screen.getByText(/Carregue um PDF/i)).toBeInTheDocument();
     });
 
-    it ("deve renderizar o GrafoViewer", () => {
+    it("deve renderizar o GrafoViewer", () => {
         renderGrafo();
 
         expect(
-            screen.getByTestId("grafo-viewer.")).toBeInDocument();
+            screen.getByTestId("grafo-viewer")).toBeInTheDocument();
     });
 });
