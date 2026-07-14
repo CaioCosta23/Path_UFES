@@ -1,5 +1,8 @@
 /**
- * Importa as funções de teste, renderização e Roteamento/direcionamento de página;
+ * Testes de integração da página "Grafo".
+ * Verifica se o cabeçalho estático (título e subtítulo) é renderizado corretamente, e se o "GrafoViewer" é incluído no lugar esperado —
+ * sem testar o que acontece DENTRO do GrafoViewer (Cytoscape, upload de PDF, chamadas de API), já que isso é responsabilidade de um
+ * arquivo de teste dedicado a ele.
  */
 import {describe, it, expect, vi} from "vitest";
 import {render, screen} from "@testing-library/react";
@@ -7,17 +10,22 @@ import {MemoryRouter} from "react-router-dom";
 import Grafo from "../../pages/Grafo";
 
 /**
- * Módulo que subistitui função pelo objeto real que seria inserido/utilizado na aplicação para fins de teste,
- * e verificando se o mesmo renderiza;
+ * Substitui o componente real "GrafoViewer" por uma versão mockada (uma <div> vazia, identificável via data-testid), isolando o teste
+ * de "Grafo" de toda a complexidade interna do visualizador (Cytoscape manipulando o DOM diretamente, requisições ao backend, etc.).
+ *
+ * @returns {{default: () => import("react").ReactElement}}
  */
 vi.mock("../../components/GrafoViewer", () => ({
     default: () => <div data-testid = "grafo-viewer"/>
 }));
 
-/**
- * Função auxiliar de configuração para o teste;
- */
 describe("Grafo", () => {
+    /**
+     * Renderiza a página Grafo dentro de um MemoryRouter (necessário porque componentes de rota, como o Navbar em App.jsx, podem
+     * depender de um Router para funcionar).
+     *
+     * @returns {import("@testing-library/react").RenderResult}
+     */
     const renderGrafo = () =>
         render(
             <MemoryRouter>
@@ -25,7 +33,9 @@ describe("Grafo", () => {
             </MemoryRouter>
         );
 
-    // Busca o elemento que representa o título da página e o que espera visualizar;
+    /**
+     * Confirma a presença do <h1> principal da página.
+     */
     it("deve renderizar o título da página", () => {
         renderGrafo();
 
@@ -33,7 +43,9 @@ describe("Grafo", () => {
             screen.getByText("Visualizador de Grafo")).toBeInTheDocument();
     });
 
-    // Busca o elemento que representa o subtítulo da página e o que espera visualizar;
+    /**
+     * Confirma a presença do texto de instrução logo abaixo do título.
+     */
     it("deve renderizar o subtítulo", () => {
         renderGrafo();
 
@@ -41,7 +53,10 @@ describe("Grafo", () => {
             screen.getByText(/Carregue um PDF/i)).toBeInTheDocument();
     });
 
-    // Busca o elemento que representa visualizador gráfico do Grafo na página e o que espera visualizar;
+    /**
+     * Confirma que "Grafo" de fato inclui o "GrafoViewer" (aqui, a versão mockada) em algum lugar do seu JSX — só isso, sem
+     * verificar nada do comportamento interno do visualizador.
+     */
     it("deve renderizar o GrafoViewer", () => {
         renderGrafo();
 
