@@ -3,6 +3,12 @@ import styles from "../styles/Home.module.css"
 
 import {FileText, Link2, Search} from "lucide-react"
 
+/**
+ * Página inicial da aplicação: apresenta o projeto e destaca as
+ * principais funcionalidades, com um atalho para a página do grafo.
+ *
+ * @returns {import("react").ReactElement} Elemento React representando a página inicial.
+ */
 export default function Home() {
     return (
         <div className = {styles.container}>

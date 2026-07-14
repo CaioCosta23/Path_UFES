@@ -1,5 +1,14 @@
 import styles from "../styles/Sidebar.module.css";
 
+/**
+ * Painel lateral que mostra os detalhes do nó ou aresta selecionado no grafo.
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen Define se o painel está visível na tela.
+ * @param {() => void} props.onClose Função chamada para fechar o painel.
+ * @param {Object|null} props.elementoSelecionado Dados do nó/aresta selecionado no grafo (ou `null` se nada estiver selecionado).
+ * @returns {import("react").ReactElement} Elemento React representando o painel lateral de detalhes.
+ */
 export default function Sidebar ({ isOpen, onClose, elementoSelecionado}) {
     return (
         <>

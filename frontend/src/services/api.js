@@ -1,5 +1,16 @@
+/**
+ * URL base da API do backend. Pode ser sobrescrita pela variável de
+ * ambiente `VITE_API_URL`; caso contrário, aponta para o backend local.
+ */
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+/**
+ * Trata a resposta de uma requisição fetch: lança um erro com a mensagem
+ * do backend quando a resposta não for bem-sucedida, ou retorna o JSON.
+ *
+ * @param {Response} response Resposta da requisição `fetch`.
+ * @returns {Promise<any>} Corpo da resposta já convertido em JSON.
+ */
 async function handleResponse(response) {
     if (!response.ok) {
         const erro = await response.text();
@@ -8,6 +19,10 @@ async function handleResponse(response) {
     return response.json();
 }
 
+/**
+ * Cliente HTTP simples usado por todos os serviços da aplicação para se
+ * comunicar com a API do backend.
+ */
 export const api = {
     get: (endpoint) =>
         fetch(`${BASE_URL}${endpoint}`).then(handleResponse),
