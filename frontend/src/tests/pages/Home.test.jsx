@@ -1,15 +1,20 @@
 /**
- * Importa funções de teste, renderização e roteamento de página;
+ * Testes de integração da página "Home".
+ * Verifica se o conteúdo estático (título, descrição, botão de navegação para o grafo e os três cards de features com seus
+ * ícones) é renderizado corretamente — não há nenhum hook ou serviço externo envolvido, então não é necessário nenhum mock aqui.
  */
 import {describe, it, expect} from "vitest";
 import {render, screen} from "@testing-library/react";
 import {MemoryRouter} from "react-router-dom";
 import Home from "../../pages/Home";
 
-/**
- * Configuração de descrição de teste;
- */
 describe("Home", () => {
+    /**
+     * Renderiza a página Home dentro de um MemoryRouter (necessário porque o botão "Visualizar Grafo" usa <Link>, do react-router-dom,
+     * que exige estar dentro de um Router para funcionar).
+     *
+     * @returns {import("@testing-library/react").RenderResult}
+     */
     const renderHome = () =>
         render(
             <MemoryRouter>
@@ -17,7 +22,9 @@ describe("Home", () => {
             </MemoryRouter>
         );
 
-    // Busca o elemento que representa o título na página e o que ele espera visualizar;
+    /**
+     * Confirma a presença do <h1> principal da página.
+     */
     it("deve renderizar o título principal", () => {
         renderHome();
 
@@ -25,15 +32,20 @@ describe("Home", () => {
             screen.getByText("Visualizador de Grade Curricular")).toBeInTheDocument();
     });
 
-    // Busca o elemento que representa a descrição da página e o que ele espera visualizar;
+    /**
+     * Confirma a presença do texto descritivo logo abaixo do título.
+     */
     it("deve renderizar a descrição do projeto", () => {
         renderHome();
 
-        // Busca essa string em específico na página;
+        // Usa regex (em vez de string exata) para bater com um trecho
+        // da frase completa, sem precisar reescrever o texto inteiro aqui.
         expect(screen.getByText(/Explore as matérias e seus pré-requisitos/i)).toBeInTheDocument();
     });
 
-    // Busca o elemento que representa o botão do grafo e o que ele deve visualizar;
+    /**
+     * Confirma não só a presença do botão, mas também que ele realmente aponta (via href) para a rota "/grafo".
+     */
     it("deve renderizar o botão para o grafo", () => {
         renderHome();
 
@@ -42,7 +54,9 @@ describe("Home", () => {
         expect(botao.closest("a")).toHaveAttribute("href", "/grafo");
     });
 
-    // Busca o elemento que representa os "cards" das "features" e o que espera visualizar;
+    /**
+     * Confirma o título e a descrição de cada um dos três cards de "features" (Upload de PDF, Pré-Requisitos, Interativo).
+     */
     it("deve renderizar os três cards de features", () => {
         renderHome();
 
@@ -56,18 +70,19 @@ describe("Home", () => {
         expect(screen.getByText(/Clique nos nós para ver detalhes/i)).toBeInTheDocument();
     });
 
-    // Busca os elementos que representam os ícones dos "cards" das páginas e o que espera visualizar;
-    it ("deve renderizar os ícones dos cards", () => {
+    /**
+     * Confirma que os três ícones (SVG, da lucide-react) dos cards de features estão presentes.
+     *
+     * Verifica somente a QUANTIDADE de ícones, não qual ícone é qual — o Home.jsx atual não tem role/aria-label/data-testid nos ícones
+     * para permitir uma checagem mais específica.
+     *
+     * OBS: Pode ser alterado futuramente junto ao arquivo "Home.jsx" para a resolução desse "problema" (ex: adicionando aria-label
+     * em cada ícone, permitindo usar getByRole("img", {name: ...})).
+     */
+    it("deve renderizar os ícones dos cards", () => {
         const {container} = renderHome();
 
-        /**
-         * Verifica somente se a quantidade de ícones (em formato SVG - suportado pelo "lucide-react" está correto,
-         * não verificando qual o emoji e/ou figura);
-         * 
-         * OBS: Pode ser alterado futuramente junto ao arquivo "Home.jsx" para a resolução desse 'problema';
-         */
         const icones = container.querySelectorAll("svg");
-
-        expect(icones.length()).toBe(3);
+        expect(icones.length).toBe(3);
     });
 });
