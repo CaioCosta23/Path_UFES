@@ -13,4 +13,8 @@ export function useTheme() {
     return {theme, toggleTheme}
 }*/
 
+/**
+ * Reexporta o hook `useTheme` definido em `ThemeContext`, permitindo
+ * importá-lo a partir da pasta `hooks/` junto com os demais hooks da aplicação.
+ */
 export {useTheme} from "../contexts/ThemeContext";
