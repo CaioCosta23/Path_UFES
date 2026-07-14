@@ -1,5 +1,16 @@
 import {useEffect, useRef} from "react";
 
+/**
+ * Fundo animado (canvas) com nós flutuantes conectados por linhas,
+ * lembrando um grafo em movimento; usado como decoração atrás das páginas.
+ *
+ * @param {Object} props
+ * @param {"dark"|"light"} [props.theme="dark"] Paleta de cores usada no desenho.
+ * @param {number} [props.nodeCount=60] Quantidade de nós desenhados na tela.
+ * @param {number} [props.maxDistance=140] Distância máxima (em px) para dois nós serem ligados por uma linha.
+ * @param {number} [props.speed=0.3] Velocidade de deslocamento dos nós.
+ * @returns {import("react").ReactElement} Elemento React com o canvas de fundo animado.
+ */
 export default function Background({
     theme = "dark",
     nodeCount = 60,

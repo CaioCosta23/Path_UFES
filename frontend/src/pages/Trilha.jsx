@@ -2,6 +2,9 @@ import {useState} from "react";
 import {useTrilha} from "../hooks/useTrilha";
 import styles from "../styles/Trilha.module.css";
 
+/**
+ * Dias da semana disponíveis para bloqueio de horário na grade de preferências.
+ */
 const DIAS = [
     {value: "SEGUNDA", label: "Seg"},
     {value: "TERCA",   label: "Ter"},
@@ -10,6 +13,9 @@ const DIAS = [
     {value: "SEXTA",   label: "Sex"},
 ];
 
+/**
+ * Faixas de horário (das 07h às 19h) exibidas na grade de preferências.
+ */
 const HORARIOS = [
     {value: "H07_08", label: "07h"},
     {value: "H08_09", label: "08h"},
@@ -25,10 +31,20 @@ const HORARIOS = [
     {value: "H18_19", label: "18h"},
 ];
 
+/**
+ * Abreviações dos dias da semana usadas para exibir os horários das aulas.
+ */
 const DIA_LABELS = {
     SEGUNDA: "Seg", TERCA: "Ter", QUARTA: "Qua", QUINTA: "Qui", SEXTA: "Sex",
 };
 
+/**
+ * Formata a lista de aulas de uma disciplina em um texto legível,
+ * agrupando dias e faixa de horário (ex.: "Seg/Qua 07-09h").
+ *
+ * @param {Array<{dias: string[], horarios: string[]}>} aulas Aulas da disciplina, com os dias e horários ocupados.
+ * @returns {string|null} Texto formatado com os horários, ou `null` se não houver aulas.
+ */
 function formatarAulas(aulas) {
     if (!aulas || aulas.length === 0) return null;
     return aulas.map(({dias, horarios}) => {
@@ -40,6 +56,14 @@ function formatarAulas(aulas) {
     }).join(", ");
 }
 
+/**
+ * Página de trilha acadêmica: permite ao aluno configurar preferências
+ * (matrícula, semestre de início, número máximo de disciplinas por semestre
+ * e horários indisponíveis) e exibe a sequência de disciplinas sugerida
+ * até a formatura.
+ *
+ * @returns {import("react").ReactElement} Elemento React representando a página de trilha.
+ */
 export default function Trilha() {
     const {trilha, loading, erro, gerarTrilha} = useTrilha();
 

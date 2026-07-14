@@ -2,6 +2,14 @@ import {useState, useRef, useEffect} from "react";
 import cytoscape from "cytoscape";
 import {fetchGrafo, uploadPdf} from "../services/grafoService";
 
+/**
+ * Hook que encapsula toda a lógica do grafo de disciplinas: cria e mantém a
+ * instância do Cytoscape.js, carrega os dados do backend (ou de arquivos
+ * JSON/PDF) e expõe as ações de edição (adicionar/remover nós e arestas,
+ * reorganizar o layout) usadas pelo componente `GrafoViewer`.
+ *
+ * @returns {Object} Estado do grafo e funções para manipulá-lo.
+ */
 export function useGrafo() {
     const cyRef = useRef(null);
     const containerRef = useRef(null);
