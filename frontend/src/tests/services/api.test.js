@@ -1,29 +1,34 @@
 /**
- * Importa as funções de teste;
+ * Testes unitários do módulo "api" (camada de comunicação HTTP com o backend).
+ * Cobre os quatro métodos (get, post, postFile, delete), incluindo tanto o caminho de sucesso quanto o de erro, sem depender de rede real —
+ * a função global "fetch" é mockada em cada teste.
  */
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest";
 import {api} from "../../services/api";
 
-
-/**
- * Função de configuração/definção para os testes;
- */
 describe("api", () => {
-    // Função que substitui cada "fetch" por uma função ("fake") nova;
+    /**
+     * Antes de cada teste, substitui o "fetch" global por uma função mock (vi.fn()), permitindo controlar exatamente o que cada
+     * chamada de "fetch" devolve, sem fazer requisições de verdade.
+     */
     beforeEach(() => {
         vi.stubGlobal("fetch", vi.fn());
     });
 
-    // 'Desfaz' as funções "fakes" após cada teste para a função original da aplicação em si;
+    /**
+     * Depois de cada teste, desfaz o stub e restaura o "fetch" original, evitando que a configuração de um teste vaze para o próximo.
+     */
     afterEach(() => {
         vi.unstubAllGlobals();
     });
 
     /**
-     * Configuração/descrição para testes de requisição ("GET");
+     * Testes do método api.get(endpoint).
      */
     describe("get", () => {
-        // Simula uma requisição bem sucedida e confirma que o "GET" devolve os dados corretamente;
+        /**
+         * Caso de sucesso: simula uma resposta HTTP "ok", e confirma que api.get devolve os dados já processados (via .json()), sem nenhuma transformação adicional.
+         */
         it("deve retornar dados quando a requisição for bem sucedida", async() => {
             const dadosMock = [{id: 1, nome: "Cálculo I"}];
 
@@ -36,7 +41,10 @@ describe("api", () => {
             expect(resultado).toEqual(dadosMock);
         });
 
-        // Simula um erro de requisição e informa problema (resposta HTTP com err) no retorno dos dados; 
+        /**
+         * Caminho de erro: simula uma resposta HTTP mal sucedida (ok: false) e confirma que api.get propaga um erro com a
+         * mensagem vinda do corpo da resposta (via .text()), em vez de silenciar a falha.
+         */
         it("deve lançar erro quando a requisição falhar", async() => {
 
             fetch.mockResolvedValueOnce({
@@ -44,11 +52,13 @@ describe("api", () => {
                 status: 404,
                 text: async () => "Not Found",
             });
-            // Função assyncrona  que lança o erro (com mensagem específica);
+
             await expect(api.get("/materias")).rejects.toThrow("Not Found");
         });
 
-        // Testa a URL verificando como a mesma chamou o "fetch", se ela foi chamada ao menos uma vez e se ela está exatamente como específicada;
+        /**
+         * Confirma que api.get chama o "fetch" com a URL correta (contendo o endpoint informado), sem se importar com o valor exato de BASE_URL.
+         */
         it("deve chamar a URL correta", async() => {
 
             fetch.mockResolvedValueOnce({
@@ -62,10 +72,13 @@ describe("api", () => {
     });
 
     /**
-     * Configuração/descrição para testes de requisição ("POST");
+     * Testes do método api.post(endpoint, data).
      */
     describe ("post", () => {
-        // Verifica se a requisição de "POST" foi feita corretamente, simulando um o recebimento do objeto e as propriedades corretas;
+        /**
+         * Confirma que api.post: (1) devolve os dados de resposta do backend corretamente, e (2) chama "fetch" com o método,
+         * headers e body (JSON serializado) esperados.
+         */
         it("deve enviar dados corretamente", async() => {
             const dados = {nome: "Cálculo I"};
 
@@ -87,11 +100,15 @@ describe("api", () => {
     });
 
     /**
-     * Configuração/descrição para testes de requisição ("POSTFILE");
+     * Testes do método api.postFile(endpoint, file).
      */
     describe ("postFile", () => {
-        // Simula o recebimento de arquivos  e seus conteúdos;
-        it("deve enviar arquivo como formatoData", async() => {
+        /**
+         * Confirma que api.postFile: (1) chama "fetch" com o método e endpoint corretos, e (2) de fato envia o arquivo dentro de
+         * um FormData (chave "file"), não como o arquivo "cru" nem como JSON — checagem feita inspecionando diretamente os
+         * argumentos registrados na chamada mockada.
+         */
+        it("deve enviar arquivo como FormData", async() => {
             const arquivo = new File(["conteudo"], "grade.pdf", {
                 type: "application/pdf",
             })
@@ -115,10 +132,12 @@ describe("api", () => {
     });
 
     /**
-     * Configuração/descrição para testes de requisição ("DELETE");
+     * Testes do método api.delete(endpoint).
      */
     describe ("delete", () => {
-        // Realiza a chamadas de "endpoint" com método correto;
+        /**
+         * Confirma que api.delete chama "fetch" com o endpoint e o método "DELETE" corretos.
+         */
         it("deve chamar o endpoint correto com o método delete", async() => {
 
             fetch.mockResolvedValueOnce({
