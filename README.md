@@ -143,6 +143,13 @@ Uma vez que o projeto será uma produção baseada no paradigma orientado à obj
 - [Docker](https://docs.docker.com/get-docker/) >= 24
 - [Docker Compose](https://docs.docker.com/compose/) >= 2.20
 
+> **Linux:** após instalar o Docker, adicione seu usuário ao grupo `docker` para não precisar de `sudo` a cada comando:
+> ```bash
+> sudo usermod -aG docker $USER
+> newgrp docker
+> ```
+> Isso é feito uma única vez na máquina.
+
 ---
 
 ## Instalação e Execução da Aplicação :arrow_forward:
