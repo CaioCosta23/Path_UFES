@@ -1,6 +1,8 @@
 import {useState} from "react";
 import {useTrilha} from "../hooks/useTrilha";
 import styles from "../styles/Trilha.module.css";
+import {formatarAulas, rotuloPeriodo} from "../utils/trilhaFormat";
+import {baixarCsv, nomeArquivoTrilha, trilhaParaCsv} from "../utils/trilhaCsv";
 
 /**
  * Dias da semana disponíveis para bloqueio de horário na grade de preferências.
@@ -30,31 +32,6 @@ const HORARIOS = [
     {value: "H17_18", label: "17h"},
     {value: "H18_19", label: "18h"},
 ];
-
-/**
- * Abreviações dos dias da semana usadas para exibir os horários das aulas.
- */
-const DIA_LABELS = {
-    SEGUNDA: "Seg", TERCA: "Ter", QUARTA: "Qua", QUINTA: "Qui", SEXTA: "Sex",
-};
-
-/**
- * Formata a lista de aulas de uma disciplina em um texto legível,
- * agrupando dias e faixa de horário (ex.: "Seg/Qua 07-09h").
- *
- * @param {Array<{dias: string[], horarios: string[]}>} aulas Aulas da disciplina, com os dias e horários ocupados.
- * @returns {string|null} Texto formatado com os horários, ou `null` se não houver aulas.
- */
-function formatarAulas(aulas) {
-    if (!aulas || aulas.length === 0) return null;
-    return aulas.map(({dias, horarios}) => {
-        const diasLabel = dias.map((d) => DIA_LABELS[d] ?? d).join("/");
-        const sorted    = [...horarios].sort();
-        const inicio    = sorted[0].slice(1, 3);      // "H07_08" → "07"
-        const fim       = sorted.at(-1).slice(4, 6);  // "H08_09" → "09"
-        return `${diasLabel} ${inicio}-${fim}h`;
-    }).join(", ");
-}
 
 /**
  * Página de trilha acadêmica: permite ao aluno configurar preferências
@@ -251,6 +228,13 @@ export default function Trilha() {
                                 : <>Faltam <strong>{trilha.optativas_faltantes}</strong> optativa(s) de 9 exigidas.</>
                             }
                         </p>
+                        <button
+                            className={styles.button}
+                            type="button"
+                            onClick={() => baixarCsv(nomeArquivoTrilha(trilha), trilhaParaCsv(trilha))}
+                        >
+                            Baixar CSV
+                        </button>
                     </div>
 
                     {/* Legenda */}
@@ -271,7 +255,7 @@ export default function Trilha() {
                                         <h2 className={styles.semTitulo}>
                                             {sem.semestre}
                                             <span className={styles.semTipo}>
-                                                {sem.tipo === "IMPAR" ? "Ímpar" : "Par"}
+                                                {rotuloPeriodo(sem.tipo)}
                                             </span>
                                         </h2>
                                         <span className={styles.semCreditos}>
