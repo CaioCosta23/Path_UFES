@@ -2,8 +2,8 @@
 
 ## 1. Formatação de horários compartilhada
 
-- [ ] 1.1 Mover `formatarAulas`, `DIA_LABELS` e um rótulo de período (`PAR`→"Par", `IMPAR`→"Ímpar") de `frontend/src/pages/Trilha.jsx` para um módulo em `frontend/src/utils/`, com comentários JSDoc no padrão do projeto. Fazer a página importar dali. Verificar que `npx vitest run src/tests/pages/Trilha.test.jsx` continua passando sem alterações no teste.
-- [ ] 1.2 Criar um teste unitário do util de formatação em `frontend/src/tests/utils/`, cobrindo aulas vazias (`null`), um bloco ("Seg 07-09h") e múltiplos blocos/dias ("Seg/Qua 07-09h, Sex 10-12h"). Verificar com `npx vitest run src/tests/utils`.
+- [ ] 1.1 Criar `frontend/src/utils/trilhaFormat.js` e mover para ele `formatarAulas`, `DIA_LABELS` e um rótulo de período (`PAR`→"Par", `IMPAR`→"Ímpar") de `frontend/src/pages/Trilha.jsx`, com comentários JSDoc no padrão do projeto. Fazer a página importar dali. Verificar que `npx vitest run src/tests/pages/Trilha.test.jsx` continua passando sem alterações no teste.
+- [ ] 1.2 Criar `frontend/src/tests/utils/trilhaFormat.test.js`, cobrindo aulas vazias (`null`), um bloco ("Seg 07-09h") e múltiplos blocos/dias ("Seg/Qua 07-09h, Sex 10-12h"). Verificar com `npx vitest run src/tests/utils`.
 
 ## 2. Geração do CSV
 
@@ -15,21 +15,22 @@
   - optativas previstas ausentes;
   - escape de `;` e `"`;
   - nome do arquivo com e sem semestres;
-  - BOM no Blob, com `URL.createObjectURL` mockado.
+  - `baixarCsv` com `URL.createObjectURL`/`revokeObjectURL` como `vi.fn()`: o `Blob` capturado tem tipo `text/csv;charset=utf-8`, seus três primeiros bytes (lidos com `arrayBuffer()`) são `EF BB BF`, o `<a>` recebe o nome do arquivo em `download` e a URL é revogada. Não usar `blob.text()` para checar o BOM, pois ele é descartado na decodificação.
 
   Verificar com `npx vitest run src/tests/utils/trilhaCsv.test.js`.
 
 ## 3. Botão na página Trilha
 
-- [ ] 3.1 Adicionar o botão "Baixar CSV" (`type="button"`) no bloco de resumo de `frontend/src/pages/Trilha.jsx`, chamando `baixarCsv(nomeArquivoTrilha(trilha), trilhaParaCsv(trilha))`, com estilo em `frontend/src/styles/Trilha.module.css` coerente com o botão existente. Verificar com o teste da tarefa 3.2.
-- [ ] 3.2 Estender `frontend/src/tests/pages/Trilha.test.jsx`. Verificar que:
+- [ ] 3.1 Adicionar o botão "Baixar CSV" (`type="button"`) no bloco de resumo de `frontend/src/pages/Trilha.jsx`, chamando `baixarCsv(nomeArquivoTrilha(trilha), trilhaParaCsv(trilha))`, reaproveitando a classe `.button` de `Trilha.module.css`, sem CSS novo, e posicionando-o depois dos parágrafos do `.resumo`. Verificar com o teste da tarefa 3.2.
+- [ ] 3.2 Estender `frontend/src/tests/pages/Trilha.test.jsx`, usando `vi.mock` em `../../utils/trilhaCsv` com `importOriginal` para trocar só `baixarCsv` por `vi.fn()`. Verificar que:
   - o botão não aparece com `trilha: null`;
   - o botão aparece com `trilhaMock`;
-  - o clique chama `baixarCsv` (mockado) com `trilha_2023100265_2026-2.csv` e não aciona `gerarTrilha` nem `fetch`.
+  - cenário "Sem requisição adicional": com `fetch` espiado (`vi.spyOn(globalThis, "fetch")`), o clique não chama `fetch` nem `gerarTrilha`;
+  - cenário "Formulário alterado após gerar": com `trilhaMock` exibido, o aluno altera a matrícula no formulário e clica no botão; `baixarCsv` recebe o nome `trilha_2023100265_2026-2.csv` e o conteúdo igual a `trilhaParaCsv(trilhaMock)`, sem refletir o valor digitado.
 
   Verificar com `npx vitest run src/tests/pages/Trilha.test.jsx`.
 
 ## 4. Verificação integrada
 
-- [ ] 4.1 Rodar a suíte completa do frontend (`npx vitest run`) e o lint (`npx eslint src`) sem falhas.
+- [ ] 4.1 Rodar a suíte completa do frontend (`npx vitest run`) e o lint (`npm run lint`, que executa `eslint .` como definido em `package.json`) sem falhas.
 - [ ] 4.2 Com o app rodando, gerar uma trilha, baixar o CSV e abri-lo numa planilha. Confirmar acentuação correta, colunas separadas e as mesmas linhas da tela.
